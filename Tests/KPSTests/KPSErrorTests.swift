@@ -2,116 +2,104 @@ import Testing
 import Foundation
 @testable import kps
 
+// MARK: - Test Helpers
+
+/// 에러 설명이 주어진 텍스트를 포함하는지 확인
+private func assertErrorContains(_ error: KPSError, _ text: String) {
+    #expect(error.errorDescription?.contains(text) == true)
+}
+
+/// 에러 설명이 주어진 텍스트 중 하나를 포함하는지 확인
+private func assertErrorContainsAny(_ error: KPSError, _ texts: String...) {
+    let contains = texts.contains { text in
+        error.errorDescription?.contains(text) == true
+    }
+    #expect(contains)
+}
+
 // MARK: - Error Description Tests
 
 @Test("configNotFound should have helpful error message")
 func configNotFoundHasHelpfulMessage() {
-    let error = KPSError.configNotFound
-
-    #expect(error.errorDescription?.contains("kps init") == true)
+    assertErrorContains(KPSError.config(.notFound), "kps init")
 }
 
 @Test("configNotFoundInGitRepo should mention git repository")
 func configNotFoundInGitRepoMentionsGitRepo() {
-    let error = KPSError.configNotFoundInGitRepo
-
-    #expect(error.errorDescription?.contains("git repository") == true)
-    #expect(error.errorDescription?.contains("kps init") == true)
+    let error = KPSError.config(.notFoundInGitRepo)
+    assertErrorContains(error, "git repository")
+    assertErrorContains(error, "kps init")
 }
 
 @Test("invalidProblemNumber should provide clear message")
 func invalidProblemNumberProvidesClearMessage() {
-    let error = KPSError.invalidProblemNumber
-
-    #expect(error.errorDescription != nil)
+    #expect(KPSError.platform(.invalidProblemNumber).errorDescription != nil)
 }
 
 @Test("platformRequired should suggest using flags")
 func platformRequiredSuggestsFlags() {
-    let error = KPSError.platformRequired
-
-    #expect(error.errorDescription?.contains("-b") == true ||
-            error.errorDescription?.contains("-p") == true)
+    assertErrorContainsAny(KPSError.platform(.platformRequired), "-b", "-p")
 }
 
 @Test("conflictingPlatformFlags should mention both flags")
 func conflictingPlatformFlagsMentionsBothFlags() {
-    let error = KPSError.conflictingPlatformFlags
-
-    #expect(error.errorDescription?.contains("-b") == true)
-    #expect(error.errorDescription?.contains("-p") == true)
+    let error = KPSError.platform(.conflictingFlags)
+    assertErrorContains(error, "-b")
+    assertErrorContains(error, "-p")
 }
 
 @Test("urlWithPlatformFlag should explain the conflict")
 func urlWithPlatformFlagExplainsConflict() {
-    let error = KPSError.urlWithPlatformFlag
-
-    #expect(error.errorDescription != nil)
+    #expect(KPSError.platform(.urlWithPlatformFlag).errorDescription != nil)
 }
 
 @Test("invalidConfigKey should be informative")
 func invalidConfigKeyIsInformative() {
-    let error = KPSError.invalidConfigKey("invalid")
-
-    #expect(error.errorDescription?.contains("invalid") == true)
+    assertErrorContains(KPSError.config(.invalidKey("invalid")), "invalid")
 }
 
 @Test("fileAlreadyExists should mention the problem")
 func fileAlreadyExistsMentionsTheProblem() {
-    let error = KPSError.fileAlreadyExists("/path/to/file.swift")
-
-    #expect(error.errorDescription?.contains("file.swift") == true)
+    assertErrorContains(KPSError.file(.alreadyExists("/path/to/file.swift")), "file.swift")
 }
 
 @Test("fileNotFound should be clear")
 func fileNotFoundIsClear() {
-    let error = KPSError.fileNotFound("/path/to/file.swift")
-
-    #expect(error.errorDescription?.contains("file.swift") == true)
+    assertErrorContains(KPSError.file(.notFound("/path/to/file.swift")), "file.swift")
 }
 
 @Test("gitNotAvailable should provide installation hint")
 func gitNotAvailableProvidesInstallationHint() {
-    let error = KPSError.gitNotAvailable
-
-    #expect(error.errorDescription?.contains("Git") == true)
-    #expect(error.errorDescription?.contains("git-scm.com") == true)
+    let error = KPSError.git(.notAvailable)
+    assertErrorContains(error, "Git")
+    assertErrorContains(error, "git-scm.com")
 }
 
 @Test("notGitRepository should suggest git init")
 func notGitRepositorySuggestsGitInit() {
-    let error = KPSError.notGitRepository
-
-    #expect(error.errorDescription?.contains("git init") == true)
+    assertErrorContains(KPSError.git(.notRepository), "git init")
 }
 
 @Test("nothingToCommit should ask if file was saved")
 func nothingToCommitAsksIfFileSaved() {
-    let error = KPSError.nothingToCommit
-
-    #expect(error.errorDescription?.contains("No changes") == true)
+    assertErrorContains(KPSError.git(.nothingToCommit), "No changes")
 }
 
 @Test("gitFailed should include stderr output")
 func gitFailedIncludesStderrOutput() {
-    let error = KPSError.gitFailed("test error output")
-
-    #expect(error.errorDescription?.contains("test error output") == true)
+    assertErrorContains(KPSError.git(.failed("test error output")), "test error output")
 }
 
 @Test("gitPushFailed should include stderr output")
 func gitPushFailedIncludesStderrOutput() {
-    let error = KPSError.gitPushFailed("remote error")
-
-    #expect(error.errorDescription?.contains("remote error") == true)
+    assertErrorContains(KPSError.git(.pushFailed("remote error")), "remote error")
 }
 
 @Test("permissionDenied should mention permissions")
 func permissionDeniedMentionsPermissions() {
-    let error = KPSError.permissionDenied("/path/to/file")
-
+    let error = KPSError.file(.permissionDenied("/path/to/file"))
     #expect(error.errorDescription?.lowercased().contains("permission") == true)
-    #expect(error.errorDescription?.contains("/path/to/file") == true)
+    assertErrorContains(error, "/path/to/file")
 }
 
 // MARK: - NSError Mapping Tests
@@ -126,10 +114,10 @@ func nsFileWriteNoPermissionMapsToPermissionDenied() {
 
     let kpsError = KPSError.from(nsError)
 
-    if case .permissionDenied(let path) = kpsError {
+    if case .file(.permissionDenied(let path)) = kpsError {
         #expect(path == "/test/path")
     } else {
-        Issue.record("Expected permissionDenied, got \(kpsError)")
+        Issue.record("Expected file(.permissionDenied), got \(kpsError)")
     }
 }
 
@@ -143,10 +131,10 @@ func nsFileReadNoPermissionMapsToPermissionDenied() {
 
     let kpsError = KPSError.from(nsError)
 
-    if case .permissionDenied(let path) = kpsError {
+    if case .file(.permissionDenied(let path)) = kpsError {
         #expect(path == "/test/path")
     } else {
-        Issue.record("Expected permissionDenied, got \(kpsError)")
+        Issue.record("Expected file(.permissionDenied), got \(kpsError)")
     }
 }
 
@@ -160,10 +148,10 @@ func otherNSErrorsMapsToFileIOError() {
 
     let kpsError = KPSError.from(nsError)
 
-    if case .fileIOError = kpsError {
+    if case .file(.ioError) = kpsError {
         // Success
     } else {
-        Issue.record("Expected fileIOError, got \(kpsError)")
+        Issue.record("Expected file(.ioError), got \(kpsError)")
     }
 }
 
@@ -171,24 +159,24 @@ func otherNSErrorsMapsToFileIOError() {
 
 @Test("invalidProblemNumber should be equal to itself")
 func invalidProblemNumberEqualityWorks() {
-    let error1 = KPSError.invalidProblemNumber
-    let error2 = KPSError.invalidProblemNumber
+    let error1 = KPSError.platform(.invalidProblemNumber)
+    let error2 = KPSError.platform(.invalidProblemNumber)
 
     #expect(error1 == error2)
 }
 
 @Test("invalidConfigKey with same value should be equal")
 func invalidConfigKeyEqualityWorks() {
-    let error1 = KPSError.invalidConfigKey("test")
-    let error2 = KPSError.invalidConfigKey("test")
+    let error1 = KPSError.config(.invalidKey("test"))
+    let error2 = KPSError.config(.invalidKey("test"))
 
     #expect(error1 == error2)
 }
 
 @Test("fileAlreadyExists with same path should be equal")
 func fileAlreadyExistsEqualityWorks() {
-    let error1 = KPSError.fileAlreadyExists("/path/file.swift")
-    let error2 = KPSError.fileAlreadyExists("/path/file.swift")
+    let error1 = KPSError.file(.alreadyExists("/path/file.swift"))
+    let error2 = KPSError.file(.alreadyExists("/path/file.swift"))
 
     #expect(error1 == error2)
 }

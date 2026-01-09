@@ -3,7 +3,7 @@ enum Platform: String, Codable {
     case boj
     case programmers
 
-    /// 문제 페이지 기본 URL
+    /// 문제 페이지의 기본 URL
     var baseURL: String {
         switch self {
         case .boj:
@@ -13,7 +13,7 @@ enum Platform: String, Codable {
         }
     }
 
-    /// 프로젝트 구조 내 폴더 이름
+    /// 프로젝트 구조에서의 폴더 이름
     var folderName: String {
         switch self {
         case .boj:

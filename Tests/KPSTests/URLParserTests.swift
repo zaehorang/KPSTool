@@ -3,125 +3,64 @@ import Testing
 
 // MARK: - BOJ Tests
 
-@Test("parse should extract problem number from BOJ URL")
-func parseExtractsProblemNumberFromBOJURL() throws {
-    let url = "https://acmicpc.net/problem/1000"
+/// BOJ URL 파싱용 테스트 데이터 (url, expectedNumber)
+private let bojTestCases: [(String, String)] = [
+    ("https://acmicpc.net/problem/1000", "1000"),
+    ("https://www.acmicpc.net/problem/1000", "1000"),
+    ("http://acmicpc.net/problem/1000", "1000"),
+    ("https://boj.kr/1000", "1000")
+]
 
+@Test("parse should correctly parse BOJ URLs", arguments: bojTestCases)
+func parseBOJURLs(url: String, expectedNumber: String) throws {
     let problem = try URLParser.parse(url)
-
-    #expect(problem.number == "1000")
-    #expect(problem.platform == .boj)
-}
-
-@Test("parse should handle WWW prefix for BOJ")
-func parseHandlesWWWPrefixForBOJ() throws {
-    let url = "https://www.acmicpc.net/problem/1000"
-
-    let problem = try URLParser.parse(url)
-
-    #expect(problem.number == "1000")
-    #expect(problem.platform == .boj)
-}
-
-@Test("parse should handle HTTP for BOJ")
-func parseHandlesHTTPForBOJ() throws {
-    let url = "http://acmicpc.net/problem/1000"
-
-    let problem = try URLParser.parse(url)
-
-    #expect(problem.number == "1000")
-    #expect(problem.platform == .boj)
-}
-
-@Test("parse should parse BOJ short URL")
-func parsesBOJShortURL() throws {
-    let url = "https://boj.kr/1000"
-
-    let problem = try URLParser.parse(url)
-
-    #expect(problem.number == "1000")
+    #expect(problem.number == expectedNumber)
     #expect(problem.platform == .boj)
 }
 
 // MARK: - Programmers Tests
 
-@Test("parse should parse Programmers canonical URL")
-func parsesProgrammersCanonicalURL() throws {
-    let url = "https://school.programmers.co.kr/learn/courses/30/lessons/340207"
+/// Programmers URL 파싱용 테스트 데이터 (url, expectedNumber)
+private let programmersTestCases: [(String, String)] = [
+    ("https://school.programmers.co.kr/learn/courses/30/lessons/340207", "340207"),
+    ("https://programmers.co.kr/learn/courses/30/lessons/340207", "340207"),
+    ("https://www.programmers.co.kr/learn/courses/30/lessons/340207", "340207")
+]
 
+@Test("parse should correctly parse Programmers URLs", arguments: programmersTestCases)
+func parseProgrammersURLs(url: String, expectedNumber: String) throws {
     let problem = try URLParser.parse(url)
-
-    #expect(problem.number == "340207")
-    #expect(problem.platform == .programmers)
-}
-
-@Test("parse should parse Programmers legacy URL")
-func parsesProgrammersLegacyURL() throws {
-    let url = "https://programmers.co.kr/learn/courses/30/lessons/340207"
-
-    let problem = try URLParser.parse(url)
-
-    #expect(problem.number == "340207")
-    #expect(problem.platform == .programmers)
-}
-
-@Test("parse should handle WWW prefix for Programmers")
-func parsesHandlesWWWPrefixForProgrammers() throws {
-    let url = "https://www.programmers.co.kr/learn/courses/30/lessons/340207"
-
-    let problem = try URLParser.parse(url)
-
-    #expect(problem.number == "340207")
+    #expect(problem.number == expectedNumber)
     #expect(problem.platform == .programmers)
 }
 
 // MARK: - URL Normalization Tests
 
-@Test("parse should ignore query string")
-func parseIgnoresQueryString() throws {
-    let url = "https://school.programmers.co.kr/learn/courses/30/lessons/340207?itm_content=detail"
+/// URL 정규화용 테스트 데이터 (url, expectedNumber, expectedPlatform)
+private let normalizationTestCases: [(String, String, Platform)] = [
+    ("https://school.programmers.co.kr/learn/courses/30/lessons/340207?itm_content=detail", "340207", .programmers),
+    ("https://acmicpc.net/problem/1000#section", "1000", .boj)
+]
 
+@Test("parse should ignore query strings and fragments", arguments: normalizationTestCases)
+func parseNormalizesURLs(url: String, expectedNumber: String, expectedPlatform: Platform) throws {
     let problem = try URLParser.parse(url)
-
-    #expect(problem.number == "340207")
-    #expect(problem.platform == .programmers)
-}
-
-@Test("parse should ignore fragment")
-func parseIgnoresFragment() throws {
-    let url = "https://acmicpc.net/problem/1000#section"
-
-    let problem = try URLParser.parse(url)
-
-    #expect(problem.number == "1000")
-    #expect(problem.platform == .boj)
+    #expect(problem.number == expectedNumber)
+    #expect(problem.platform == expectedPlatform)
 }
 
 // MARK: - Error Tests
 
-@Test("parse should throw unsupportedURL for unknown domain")
-func parseThrowsUnsupportedURLForUnknownDomain() {
-    let url = "https://leetcode.com/problems/two-sum"
+/// unsupportedURL 에러를 발생시켜야 하는 유효하지 않은 URL 테스트 데이터
+private let invalidURLTestCases = [
+    "https://leetcode.com/problems/two-sum",
+    "https://acmicpc.net/submit/1000",
+    "https://acmicpc.net/problem/"
+]
 
-    #expect(throws: KPSError.unsupportedURL) {
-        try URLParser.parse(url)
-    }
-}
-
-@Test("parse should throw unsupportedURL for invalid path")
-func parseThrowsUnsupportedURLForInvalidPath() {
-    let url = "https://acmicpc.net/submit/1000"
-
-    #expect(throws: KPSError.unsupportedURL) {
-        try URLParser.parse(url)
-    }
-}
-
-@Test("parse should throw unsupportedURL for missing problem number")
-func parseThrowsUnsupportedURLForMissingProblemNumber() {
-    let url = "https://acmicpc.net/problem/"
-
-    #expect(throws: KPSError.unsupportedURL) {
+@Test("parse should throw unsupportedURL for invalid URLs", arguments: invalidURLTestCases)
+func parseThrowsUnsupportedURL(url: String) {
+    #expect(throws: KPSError.platform(.unsupportedURL)) {
         try URLParser.parse(url)
     }
 }
