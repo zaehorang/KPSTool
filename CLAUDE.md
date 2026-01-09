@@ -22,6 +22,7 @@ KPS는 알고리즘 문제 풀이를 정돈된 개발 기록으로 남기게 해
 | CLI 프레임워크 | ArgumentParser |
 | 테스트 프레임워크 | Swift Testing |
 | 패키지 관리 | SPM |
+| 코드 스타일 | SwiftLint (SPM Plugin) |
 | Git 연동 | Process (shell) |
 
 ## 프로젝트 구조
@@ -99,6 +100,46 @@ Console.success("Done!")           // ✅
 Console.info("File created")       // ✔
 Console.warning("Push failed")     // ⚠️ (stderr)
 Console.error("Config not found")  // ❌ (stderr)
+```
+
+### SwiftLint
+**SwiftLint는 SPM Plugin으로 통합되어 있습니다.**
+
+#### 자동 실행 (BuildToolPlugin)
+```bash
+# 빌드 시 자동으로 SwiftLint 실행
+swift build
+
+# 테스트 시에도 자동 실행
+swift test
+```
+
+#### 수동 실행
+```bash
+# 로컬 SwiftLint 사용 (Homebrew 설치 필요)
+swiftlint lint --config .swiftlint.yml
+swiftlint --fix --config .swiftlint.yml
+```
+
+#### 설정 파일
+- `.swiftlint.yml`: `docs/SWIFT_STYLE_GUIDE.md` 기반 설정
+- 주요 규칙:
+  - Line length: 120자
+  - 들여쓰기: 4 spaces
+  - Access control: 필요한 곳만 `private` 명시
+  - `self` 사용: 필요할 때만 (클로저 캡처, 초기화 등)
+
+#### 새 프로젝트에서 사용 시
+SwiftLint는 SPM dependency로 포함되어 있으므로:
+```bash
+git clone <프로젝트>
+swift build  # SwiftLint 자동 다운로드 & 적용
+```
+
+#### CI/CD 통합
+```bash
+# GitHub Actions 등에서 별도 설치 불필요
+swift build  # SwiftLint 자동 실행
 ```
 
 ## 문서화 규칙
