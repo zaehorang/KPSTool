@@ -1,23 +1,23 @@
 import Foundation
 
-/// Console output utilities with stdout/stderr separation
+/// stdout/stderr 분리를 지원하는 콘솔 출력 유틸리티
 enum Console {
-    /// Outputs success message to stdout
+    /// 성공 메시지를 stdout에 출력
     static func success(_ message: String) {
         print("✅ \(message)")
     }
 
-    /// Outputs info message to stdout
+    /// 정보 메시지를 stdout에 출력
     static func info(_ message: String, icon: String = "✔") {
         print("\(icon) \(message)")
     }
 
-    /// Outputs warning message to stderr
+    /// 경고 메시지를 stderr에 출력
     static func warning(_ message: String) {
         fputs("⚠️  \(message)\n", stderr)
     }
 
-    /// Outputs error message to stderr
+    /// 에러 메시지를 stderr에 출력
     static func error(_ message: String) {
         fputs("❌ \(message)\n", stderr)
     }

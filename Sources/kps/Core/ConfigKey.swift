@@ -1,4 +1,4 @@
-/// Configuration keys for KPS project settings
+/// KPS 프로젝트 설정 키
 enum ConfigKey: String, CaseIterable {
     case author
     case sourceFolder
@@ -7,11 +7,11 @@ enum ConfigKey: String, CaseIterable {
     var description: String {
         switch self {
         case .author:
-            return "Author name for file headers"
+            return "파일 헤더에 사용할 작성자 이름"
         case .sourceFolder:
-            return "Source folder path (e.g., 'Sources')"
+            return "소스 폴더 경로 (예: 'Sources')"
         case .projectName:
-            return "Project name"
+            return "프로젝트 이름"
         }
     }
 }

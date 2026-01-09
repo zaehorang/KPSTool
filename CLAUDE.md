@@ -269,14 +269,14 @@ Red → Green → Refactor
 커밋 메시지 형식:
 ```bash
 # 기능 추가
-feat: add BOJ URL parsing
-feat: add Config JSON encoding/decoding
+feat: BOJ URL 파싱 기능 추가
+feat: Config JSON 인코딩/디코딩 추가
 
 # 테스트 추가
-test: add URLParser tests
+test: URLParser 테스트 추가
 
 # 구조적 변경
-refactor: extract URLParser from NewCommand
+refactor: NewCommand에서 URLParser 추출
 ```
 
 ### 작업 워크플로우

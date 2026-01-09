@@ -1,4 +1,4 @@
-/// Represents a problem from a specific platform
+/// 특정 플랫폼의 문제를 나타냄
 struct Problem {
     let platform: Platform
     let number: String
@@ -11,7 +11,7 @@ struct Problem {
         "\(number).swift"
     }
 
-    /// Function name for the problem solution
+    /// 문제 풀이 함수 이름
     /// - BOJ: solve{number}
     /// - Programmers: solution{number}
     var functionName: String {

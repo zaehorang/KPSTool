@@ -1,6 +1,6 @@
 import Foundation
 
-/// Represents the root directory of a KPS project
+/// KPS 프로젝트의 루트 디렉토리를 나타냄
 struct ProjectRoot {
     let projectRoot: URL
 
@@ -9,18 +9,18 @@ struct ProjectRoot {
     }
 }
 
-/// Locates KPS project root by searching for `.kps/config.json`
+/// `.kps/config.json`을 찾아 KPS 프로젝트 루트 디렉토리 탐색
 enum ConfigLocator {
-    /// Searches upward from starting path to find KPS config
-    /// - Parameter startingPath: Directory to start searching from (defaults to current directory)
-    /// - Returns: `Result` with `ProjectRoot` on success, or error indicating whether a git repo was found
+    /// 시작 경로에서 상위로 이동하며 KPS 설정 검색
+    /// - Parameter startingPath: 검색을 시작할 디렉토리 (기본값: 현재 디렉토리)
+    /// - Returns: 성공 시 `ProjectRoot`를 담은 `Result`, 실패 시 git 저장소 발견 여부를 나타내는 에러
     static func locate(
         from startingPath: URL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
     ) -> Result<ProjectRoot, KPSError> {
         var currentPath = startingPath.standardizedFileURL
         var gitRepoDetected = false
 
-        // Traverse upward until config is found or filesystem root is reached
+        // 설정을 찾거나 파일시스템 루트에 도달할 때까지 상위로 이동
         while currentPath.path != "/" {
             let kpsPath = currentPath.appendingPathComponent(".kps")
             let configPath = kpsPath.appendingPathComponent("config.json")
@@ -29,7 +29,7 @@ enum ConfigLocator {
                 return .success(ProjectRoot(projectRoot: currentPath))
             }
 
-            // Track git repos for better error messages (monorepo support)
+            // 더 나은 에러 메시지를 위해 git 저장소 추적 (monorepo 지원)
             let gitPath = currentPath.appendingPathComponent(".git")
             if FileManager.default.fileExists(atPath: gitPath.path) {
                 gitRepoDetected = true
@@ -42,7 +42,7 @@ enum ConfigLocator {
             currentPath = parent
         }
 
-        // Differentiate error based on whether git repo was found
+        // git 저장소 발견 여부에 따라 에러 구분
         if gitRepoDetected {
             return .failure(.configNotFoundInGitRepo)
         } else {

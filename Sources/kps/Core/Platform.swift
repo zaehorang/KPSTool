@@ -1,9 +1,9 @@
-/// Supported problem solving platforms
+/// 지원하는 문제 풀이 플랫폼
 enum Platform: String, Codable {
     case boj
     case programmers
 
-    /// Base URL for problem pages
+    /// 문제 페이지 기본 URL
     var baseURL: String {
         switch self {
         case .boj:
@@ -13,7 +13,7 @@ enum Platform: String, Codable {
         }
     }
 
-    /// Folder name in project structure
+    /// 프로젝트 구조 내 폴더 이름
     var folderName: String {
         switch self {
         case .boj:
