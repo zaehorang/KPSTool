@@ -72,13 +72,7 @@ enum GitExecutor {
     /// Git이 설치되어 실행 가능한지 확인
     /// - Returns: git --version 성공 시 true
     private static func isGitAvailable() -> Bool {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["git", "--version"]
-
-        // stdout, stderr 무시
-        process.standardOutput = Pipe()
-        process.standardError = Pipe()
+        let (process, _, _) = createGitProcessWithCapture(arguments: ["--version"])
 
         do {
             try process.run()
@@ -93,14 +87,10 @@ enum GitExecutor {
     /// - Parameter projectRoot: 확인할 디렉토리
     /// - Returns: git rev-parse --is-inside-work-tree 성공 시 true
     private static func isGitRepository(at projectRoot: URL) -> Bool {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["git", "rev-parse", "--is-inside-work-tree"]
-        process.currentDirectoryURL = projectRoot
-
-        // stdout, stderr 무시
-        process.standardOutput = Pipe()
-        process.standardError = Pipe()
+        let (process, _, _) = createGitProcessWithCapture(
+            arguments: ["rev-parse", "--is-inside-work-tree"],
+            workingDirectory: projectRoot
+        )
 
         do {
             try process.run()
@@ -168,13 +158,10 @@ enum GitExecutor {
     /// - Returns: staged 변경사항이 없으면 true
     /// - Throws: Git 명령 실패 시 에러
     private static func isNothingToCommit(at projectRoot: URL) throws -> Bool {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["git", "diff", "--cached", "--quiet"]
-        process.currentDirectoryURL = projectRoot
-
-        process.standardOutput = Pipe()
-        process.standardError = Pipe()
+        let (process, _, _) = createGitProcessWithCapture(
+            arguments: ["diff", "--cached", "--quiet"],
+            workingDirectory: projectRoot
+        )
 
         try process.run()
         process.waitUntilExit()
@@ -189,14 +176,10 @@ enum GitExecutor {
     /// - Returns: 짧은 형식의 커밋 해시
     /// - Throws: Git 명령 실패 시 에러
     private static func getCommitHash(at projectRoot: URL) throws -> String {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["git", "rev-parse", "--short", "HEAD"]
-        process.currentDirectoryURL = projectRoot
-
-        let outputPipe = Pipe()
-        process.standardOutput = outputPipe
-        process.standardError = Pipe()
+        let (process, stdoutPipe, _) = createGitProcessWithCapture(
+            arguments: ["rev-parse", "--short", "HEAD"],
+            workingDirectory: projectRoot
+        )
 
         try process.run()
         process.waitUntilExit()
@@ -205,7 +188,11 @@ enum GitExecutor {
             throw KPSError.git(.failed("Failed to get commit hash"))
         }
 
-        let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        guard let stdoutPipe else {
+            throw KPSError.git(.failed("Failed to capture output"))
+        }
+
+        let outputData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
         let hash = String(data: outputData, encoding: .utf8) ?? ""
         return hash.trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -216,33 +203,48 @@ enum GitExecutor {
     ///   - projectRoot: 프로젝트 루트 디렉토리
     /// - Throws: 명령 실패 시 KPSError.git(.failed)
     private static func runGit(arguments: [String], at projectRoot: URL) throws {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["git"] + arguments
-        process.currentDirectoryURL = projectRoot
+        let (process, stdoutPipe, stderrPipe) = createGitProcessWithCapture(
+            arguments: arguments,
+            workingDirectory: projectRoot
+        )
 
         // 에러 메시지를 영어로 받기 위해 환경변수 설정
         process.environment = ProcessInfo.processInfo.environment
         process.environment?["LANG"] = "C"
         process.environment?["LC_ALL"] = "C"
 
-        let outputPipe = Pipe()
-        let errorPipe = Pipe()
-        process.standardOutput = outputPipe
-        process.standardError = errorPipe
-
         try process.run()
         process.waitUntilExit()
 
         guard process.terminationStatus == 0 else {
-            // stdout과 stderr 모두 읽기 (git commit은 stdout에 메시지 출력)
-            let outputData = outputPipe.fileHandleForReading.readDataToEndOfFile()
-            let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-            let stdout = String(data: outputData, encoding: .utf8) ?? ""
-            let stderr = String(data: errorData, encoding: .utf8) ?? ""
-            let combinedOutput = (stdout + "\n" + stderr).trimmingCharacters(in: .whitespacesAndNewlines)
-            let message = combinedOutput.isEmpty ? "Unknown error" : combinedOutput
+            let message = extractErrorMessage(stdout: stdoutPipe, stderr: stderrPipe)
             throw KPSError.git(.failed(message))
         }
+    }
+
+    /// stdout와 stderr에서 에러 메시지 추출
+    /// - Parameters:
+    ///   - stdout: stdout Pipe
+    ///   - stderr: stderr Pipe
+    /// - Returns: 결합된 에러 메시지
+    private static func extractErrorMessage(stdout: Pipe?, stderr: Pipe?) -> String {
+        var outputParts: [String] = []
+
+        if let stdout {
+            let data = stdout.fileHandleForReading.readDataToEndOfFile()
+            if let text = String(data: data, encoding: .utf8), !text.isEmpty {
+                outputParts.append(text)
+            }
+        }
+
+        if let stderr {
+            let data = stderr.fileHandleForReading.readDataToEndOfFile()
+            if let text = String(data: data, encoding: .utf8), !text.isEmpty {
+                outputParts.append(text)
+            }
+        }
+
+        let combined = outputParts.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
+        return combined.isEmpty ? "Unknown error" : combined
     }
 }
