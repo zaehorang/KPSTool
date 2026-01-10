@@ -40,4 +40,33 @@ struct KPSConfig: Codable {
             throw KPSError.file(.ioError(error))
         }
     }
+
+    /// 특정 키의 값 조회
+    /// - Parameter key: 조회할 설정 키
+    /// - Returns: 해당 키의 값
+    func value(for key: ConfigKey) -> String {
+        switch key {
+        case .author:
+            return author
+        case .sourceFolder:
+            return sourceFolder
+        case .projectName:
+            return projectName
+        }
+    }
+
+    /// 특정 키의 값 수정
+    /// - Parameters:
+    ///   - value: 새로운 값
+    ///   - key: 수정할 설정 키
+    mutating func setValue(_ value: String, for key: ConfigKey) {
+        switch key {
+        case .author:
+            author = value
+        case .sourceFolder:
+            sourceFolder = value
+        case .projectName:
+            projectName = value
+        }
+    }
 }

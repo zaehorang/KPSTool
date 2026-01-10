@@ -14,4 +14,15 @@ enum ConfigKey: String, CaseIterable {
             return "프로젝트 이름"
         }
     }
+
+    /// 문자열을 ConfigKey로 변환
+    /// - Parameter string: 설정 키 문자열
+    /// - Returns: ConfigKey 인스턴스
+    /// - Throws: 유효하지 않은 키인 경우 KPSError.config(.invalidKey)
+    static func from(_ string: String) throws -> ConfigKey {
+        guard let key = ConfigKey(rawValue: string) else {
+            throw KPSError.config(.invalidKey(string))
+        }
+        return key
+    }
 }
