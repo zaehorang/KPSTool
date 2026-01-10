@@ -129,7 +129,6 @@ struct SolveCommand: ParsableCommand {
     /// - Parameter problem: 문제 정보
     /// - Returns: 형식: "solve: [Platform] {number}"
     private func generateCommitMessage(for problem: Problem) -> String {
-        let platformName = problem.platform == .boj ? "BOJ" : "Programmers"
-        return "solve: [\(platformName)] \(problem.number)"
+        return "solve: [\(problem.platform.displayName)] \(problem.number)"
     }
 }

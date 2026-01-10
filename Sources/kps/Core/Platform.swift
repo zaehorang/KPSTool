@@ -22,4 +22,15 @@ enum Platform: String, Codable {
             return "Programmers"
         }
     }
+
+    /// 사용자에게 표시되는 플랫폼 이름
+    /// (커밋 메시지, 로그 등에 사용)
+    var displayName: String {
+        switch self {
+        case .boj:
+            return "BOJ"
+        case .programmers:
+            return "Programmers"
+        }
+    }
 }
