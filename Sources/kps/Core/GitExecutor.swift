@@ -2,6 +2,58 @@ import Foundation
 
 /// Git 명령 실행 및 사전 조건 확인
 enum GitExecutor {
+    // MARK: - Process Helpers
+
+    /// Git Process 생성 헬퍼
+    /// - Parameters:
+    ///   - arguments: Git 명령 인자 (["git"]은 자동 추가됨)
+    ///   - workingDirectory: 작업 디렉토리 (nil이면 기본값 사용)
+    /// - Returns: 설정된 Process 인스턴스
+    private static func createGitProcess(
+        arguments: [String],
+        workingDirectory: URL? = nil
+    ) -> Process {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = ["git"] + arguments
+
+        if let workingDirectory {
+            process.currentDirectoryURL = workingDirectory
+        }
+
+        return process
+    }
+
+    /// 출력을 캡처하는 Git Process 생성 헬퍼
+    /// - Parameters:
+    ///   - arguments: Git 명령 인자
+    ///   - workingDirectory: 작업 디렉토리
+    ///   - captureStdout: stdout 캡처 여부
+    ///   - captureStderr: stderr 캡처 여부
+    /// - Returns: (process, stdoutPipe, stderrPipe) 튜플
+    private static func createGitProcessWithCapture(
+        arguments: [String],
+        workingDirectory: URL? = nil,
+        captureStdout: Bool = true,
+        captureStderr: Bool = true
+    ) -> (Process, Pipe?, Pipe?) {
+        let process = createGitProcess(arguments: arguments, workingDirectory: workingDirectory)
+
+        let stdoutPipe = captureStdout ? Pipe() : nil
+        let stderrPipe = captureStderr ? Pipe() : nil
+
+        if let stdoutPipe {
+            process.standardOutput = stdoutPipe
+        }
+        if let stderrPipe {
+            process.standardError = stderrPipe
+        }
+
+        return (process, stdoutPipe, stderrPipe)
+    }
+
+    // MARK: - Public Methods
+
     /// Git 실행 가능 여부 및 저장소 상태 확인
     /// - Parameter projectRoot: 프로젝트 루트 디렉토리
     /// - Throws: Git 미설치 시 KPSError.git(.notAvailable), 저장소 아닐 시 KPSError.git(.notRepository)
