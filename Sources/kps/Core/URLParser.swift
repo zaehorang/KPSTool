@@ -2,6 +2,10 @@ import Foundation
 
 /// 문제 풀이 플랫폼 URL 파싱 (BOJ, Programmers)
 enum URLParser {
+    /// Programmers 코딩테스트 연습 코스 ID
+    /// 참고: https://school.programmers.co.kr/learn/courses/30/lessons/...
+    private static let programmersCodingTestCourseID = "30"
+
     /// URL 문자열을 파싱하여 플랫폼과 문제 번호를 추출
     /// - Throws: 유효하지 않거나 지원하지 않는 URL인 경우 `KPSError.platform(.unsupportedURL)`
     static func parse(_ urlString: String) throws -> Problem {
@@ -63,11 +67,10 @@ enum URLParser {
     private static func parseProgrammers(path: String) throws -> Problem {
         let components = path.split(separator: "/")
 
-        // 코스 ID "30"은 코딩테스트 연습 코스를 나타냄
         guard components.count >= 4,
               components[0] == "learn",
               components[1] == "courses",
-              components[2] == "30",
+              components[2] == programmersCodingTestCourseID,
               components[3] == "lessons",
               components.count >= 5,
               !components[4].isEmpty else {
