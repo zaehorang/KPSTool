@@ -1,15 +1,52 @@
-# KPS (Korean Problem Solving)
+# 🚀 KPS (Korean Problem Solving)
 
-알고리즘 문제 풀이를 정돈된 개발 기록으로 남기게 해주는 Swift CLI 도구
+<p align="center">
+  <a href="https://swift.org"><img src="https://img.shields.io/badge/Swift-5.9+-orange.svg" alt="Swift 5.9+"></a>
+  <a href="https://www.apple.com/macos"><img src="https://img.shields.io/badge/macOS-13.0+-blue.svg" alt="macOS 13.0+"></a>
+  <a href="https://github.com/zaehorang/kps/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
+  <a href="https://github.com/zaehorang/kps/releases"><img src="https://img.shields.io/github/v/release/zaehorang/kps" alt="GitHub release"></a>
+  <a href="https://github.com/zaehorang/kps/issues"><img src="https://img.shields.io/github/issues/zaehorang/kps" alt="GitHub issues"></a>
+</p>
 
-## 특징
+> 알고리즘 문제 풀이를 **정돈된 개발 기록**으로 남기게 해주는 Swift CLI 도구입니다.
+> BOJ/Programmers 문제 링크(또는 번호) 하나로 **파일 생성부터 Git 커밋/푸시**까지의 반복 작업을 자동화하세요.
 
-- 🚀 **빠른 파일 생성**: URL 하나로 문제 풀이 파일 자동 생성
-- 📁 **체계적인 구조**: 플랫폼별로 자동 분류 및 정리
-- 🔄 **Git 자동 연동**: 풀이 완료 후 커밋 & 푸시 자동화
+<!--
+## 📺 데모
+
+아래 GIF에서 KPS의 사용 흐름을 확인하세요:
+
+![KPS Demo](docs/images/demo.gif)
+
+*데모 이미지는 추후 추가 예정입니다.*
+-->
+
+---
+
+## 💡 왜 KPS인가요?
+
+알고리즘을 풀 때, 풀이 자체보다 **귀찮은 루틴**이 더 크게 느껴질 때가 있습니다.
+
+- 문제 번호 확인 및 URL 복사
+- 플랫폼별(BOJ/Programmers) 폴더 분류 및 파일 생성
+- 기본 템플릿 작성 (헤더 주석 등)
+- 커밋 메시지 양식 맞추기
+
+KPS는 이 과정을 명령어 중심으로 표준화하여, 개발자가 오직 **문제 풀이 로직에만 집중**할 수 있도록 돕습니다.
+
+---
+
+## ✨ 핵심 특징
+
+- 🚀 **빠른 파일 생성**: URL만 넣으면 플랫폼을 자동 인식해 파일을 생성합니다.
+- 📁 **체계적인 구조 유지**: `Sources/BOJ/1000.swift` 같은 폴더링을 지원합니다.
+- 🔄 **Git 자동 연동**: 풀이 완료 후 커밋과 푸시를 한 번에 처리합니다.
 - 🌐 **다중 플랫폼 지원**: BOJ, Programmers
+- 🛠️ **Swift 기반**: Swift 개발자에게 친숙하며, 커스터마이징이 용이합니다.
 
-## 지원 플랫폼
+---
+
+## 🌐 지원 플랫폼
 
 | 플랫폼 | URL 형식 | 플래그 |
 |--------|----------|--------|
@@ -18,60 +55,110 @@
 | **Programmers** | `school.programmers.co.kr/learn/courses/30/lessons/{번호}` | `-p`, `--programmers` |
 | | `programmers.co.kr/learn/courses/30/lessons/{번호}` (구버전 호환) | |
 
-## 설치
+---
 
-### Homebrew (권장)
+## ✅ 요구 사항
+
+- **macOS 13.0 (Ventura)** 이상
+- **Swift 5.9** 이상 (소스 빌드 시)
+- **Git** (선택, `kps solve` 사용 시 필요)
+
+> **참고**:
+> - Releases 바이너리는 별도 빌드 없이 실행할 수 있습니다.
+> - 소스 빌드 시에는 Swift 5.9+ 개발 환경이 필요합니다.
+
+---
+
+## 📦 설치하기
+
+### 1) Releases 다운로드 (권장)
+
+1. [Releases 페이지](https://github.com/zaehorang/kps/releases)에서 최신 버전의 `kps` 바이너리를 다운로드합니다.
+2. 다운로드한 파일에 실행 권한을 부여하고 PATH 경로에 설치합니다.
+
+#### 옵션 A) `/usr/local/bin` (일반적인 경로, sudo 필요)
+
 ```bash
-# Coming soon
-brew install kps
+chmod +x kps
+sudo install -m 0755 kps /usr/local/bin/kps
 ```
 
-### 수동 설치
+#### 옵션 B) 홈 디렉토리 bin (sudo 없이 권장)
+
 ```bash
-git clone https://github.com/your-username/kps.git
+mkdir -p ~/.local/bin
+chmod +x kps
+install -m 0755 kps ~/.local/bin/kps
+
+# zsh 사용 시 (한 번만)
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+> **참고**: Homebrew 사용자라면 PATH는 보통 `/opt/homebrew/bin` (Apple Silicon) 또는 `/usr/local/bin` (Intel)에 이미 설정되어 있습니다.
+
+### 2) Homebrew
+
+> Homebrew 배포 준비 중입니다.
+
+### 3) 소스 빌드
+
+```bash
+git clone https://github.com/zaehorang/kps.git
 cd kps
 swift build -c release
-cp .build/release/kps /usr/local/bin/
+sudo install -m 0755 .build/release/kps /usr/local/bin/kps
 ```
 
-## Quick Start (3분 완성)
+---
 
-### 1. 프로젝트 초기화
+## 🏃 Quick Start (3분 완성)
+
+### 1) 프로젝트 초기화
+
 ```bash
-cd YourAlgorithmProject
-kps init -a "Your Name" -s "Sources"
+kps init -a "zaehorang" -s "Sources"
 ```
+> **설명**: 작성자 이름과 소스 폴더를 지정하여 KPS 설정 생성 (`.kps/config.json`)
 
-### 2. 문제 파일 생성
+### 2) 문제 파일 생성
+
 ```bash
-# URL로 생성
-kps new https://acmicpc.net/problem/1000
+# URL로 생성 (추천)
+kps new https://www.acmicpc.net/problem/1000
 
-# 또는 번호로 생성
+# 번호 + 플랫폼 플래그로 생성
 kps new 1000 -b
+kps new 340207 -p
 ```
+> **설명**: BOJ, Programmers 등의 **문제 링크**를 붙여넣으면 자동으로 파일 생성
 
-### 3. 코드 작성
+### 3) 코드 작성
+
 생성된 파일에서 문제를 풀어보세요:
 ```swift
 // Sources/BOJ/1000.swift
 import Foundation
 
-func solve1000() {
+func _1000() {
     // Your solution here
 }
 ```
 
-### 4. Git 커밋 & 푸시
+### 4) 풀이 완료 후 커밋/푸시
+
 ```bash
 kps solve 1000 -b
 ```
+> **설명**: 자동으로 커밋 메시지 생성 후 Git push까지 완료
 
 완료! 🎉
 
-## 생성되는 폴더 구조
+---
 
-```
+## 📂 폴더 구조 예시
+
+```text
 YourProject/
 ├── .kps/
 │   └── config.json          # KPS 설정 파일
@@ -85,9 +172,12 @@ YourProject/
         └── 340198.swift
 ```
 
-## 명령어 레퍼런스
+---
+
+## ⌨️ 명령어 레퍼런스
 
 ### `kps init`
+
 프로젝트를 KPS로 초기화합니다.
 
 ```bash
@@ -99,7 +189,18 @@ kps init -a "Your Name" -s "Sources"
 - `-s, --source <folder>`: 소스 폴더 이름 (기본값: Sources)
 - `--force`: 기존 설정 덮어쓰기
 
+**설정 항목:**
+
+| 항목 | 설명 | 예시 |
+|------|------|------|
+| `author` | 작성자 이름 (파일 헤더에 사용됨) | "John Doe" |
+| `sourceFolder` | 소스 파일을 저장할 폴더 이름 | "Sources", "src" |
+| `projectName` | 프로젝트 이름 (자동 감지, 수동 변경 가능) | "MyAlgorithm" |
+
+---
+
 ### `kps new`
+
 문제 풀이 파일을 생성합니다.
 
 ```bash
@@ -120,26 +221,10 @@ kps new 340207 -p
 - 번호 사용 시 플래그 필수
 - 두 플래그 동시 사용 불가
 
-### `kps config`
-설정을 조회하거나 수정합니다.
-
-```bash
-# 전체 설정 조회
-kps config
-
-# 특정 값 조회
-kps config author
-
-# 값 수정
-kps config author "New Name"
-```
-
-**설정 키:**
-- `author`: 작성자 이름
-- `sourceFolder`: 소스 폴더 경로
-- `projectName`: 프로젝트 이름
+---
 
 ### `kps solve`
+
 문제 풀이를 Git에 커밋하고 푸시합니다.
 
 ```bash
@@ -163,56 +248,35 @@ kps solve 1000 -b -m "feat: solve BOJ 1000 with binary search"
 - Git 저장소여야 함 (`git init` 필요)
 - 파일이 이미 생성되어 있어야 함
 
-## Exit Code 정책
+---
 
-| 상황 | Exit Code |
-|------|-----------|
-| 성공 (모든 단계 완료) | 0 |
-| 에러 (설정 없음, 파일 없음 등) | 1 |
-| Git 실패 (add, commit) | 1 |
-| Git push 실패 | 1 |
+### `kps config`
 
-**참고:** Push 실패도 exit code 1로 처리합니다. "기록 완성"이 목표이므로 push 실패는 미완성 상태로 간주합니다.
+설정을 조회하거나 수정합니다.
 
-## 에러 메시지 가이드
+```bash
+# 전체 설정 조회
+kps config
 
-### Config not found
-```
-Error: Config not found. Run 'kps init' first.
-```
-→ `kps init`으로 프로젝트 초기화 필요
+# 특정 값 조회
+kps config author
 
-### Platform required
+# 값 수정
+kps config author "New Name"
 ```
-Error: Platform not specified. Use -b for BOJ or -p for Programmers.
-```
-→ 번호만 입력했을 때 `-b` 또는 `-p` 플래그 필요
 
-### Not a git repository
-```
-Error: Not a git repository. Run 'git init' first.
-```
-→ `kps solve`는 Git 저장소에서만 동작
+**설정 키:**
+- `author`: 작성자 이름
+- `sourceFolder`: 소스 폴더 경로
+- `projectName`: 프로젝트 이름
 
-### No changes to commit
-```
-Error: No changes to commit. Did you save your solution file?
-```
-→ 파일 수정 후 저장했는지 확인
+---
 
-### Push failed
-```
-⚠️ Commit succeeded, but push failed.
-Possible causes:
-  • No remote configured: run 'git remote -v'
-  • Authentication issue: check your credentials or SSH key
-To complete: run 'git push' manually
-```
-→ 커밋은 성공, 수동으로 `git push` 필요
+## 🔧 Workflow 예시
 
-## Workflow 예시
+<details>
+<summary><b>일반적인 사용 흐름</b></summary>
 
-### 일반적인 사용 흐름
 ```bash
 # 1. 프로젝트 초기화 (최초 1회)
 git init
@@ -228,48 +292,140 @@ kps new https://school.programmers.co.kr/learn/courses/30/lessons/340207
 kps solve 340207 -p
 ```
 
-### 하위 폴더에서 작업
+</details>
+
+<details>
+<summary><b>하위 폴더에서 작업</b></summary>
+
 ```bash
 cd Sources/BOJ
 kps new 2557 -b              # 상위 폴더에서 설정 자동 탐색
 kps solve 2557 -b            # 프로젝트 루트에서 Git 명령 실행
 ```
 
-## FAQ
+</details>
 
-**Q: Git 없이 사용할 수 있나요?**
-A: `init`, `new`, `config` 명령은 Git 없이 사용 가능합니다. `solve` 명령만 Git 저장소가 필요합니다.
+---
 
-**Q: 다른 폴더 이름을 사용할 수 있나요?**
-A: 네, `kps init -s "src"` 또는 `kps config sourceFolder "src"`로 변경 가능합니다.
+## 📋 Exit Code 정책
 
-**Q: 여러 플랫폼의 문제를 한 프로젝트에서 관리할 수 있나요?**
+<details>
+<summary><b>Exit Code 정책 보기</b></summary>
+
+| 상황 | Exit Code |
+|------|-----------|
+| 성공 (모든 단계 완료) | 0 |
+| 에러 (설정 없음, 파일 없음 등) | 1 |
+| Git 실패 (add, commit) | 1 |
+| Git push 실패 | 1 |
+
+**참고:** Push 실패도 exit code 1로 처리합니다. "기록 완성"이 목표이므로 push 실패는 미완성 상태로 간주합니다.
+
+</details>
+
+---
+
+## ❓ FAQ & Troubleshooting
+
+<details>
+<summary><b>Q: Git 없이 사용할 수 있나요?</b></summary>
+
+A: 네, <code>init</code>, <code>new</code>, <code>config</code>는 Git 없이도 작동합니다.
+다만 <code>solve</code> 기능은 Git 저장소가 필요합니다.
+
+</details>
+
+<details>
+<summary><b>Q: 다른 폴더 이름을 사용할 수 있나요?</b></summary>
+
+A: 네, <code>kps init -s "src"</code> 또는 <code>kps config sourceFolder "src"</code>로 변경 가능합니다.
+
+</details>
+
+<details>
+<summary><b>Q: 여러 플랫폼의 문제를 한 프로젝트에서 관리할 수 있나요?</b></summary>
+
 A: 네, BOJ와 Programmers 문제를 하나의 프로젝트에서 모두 관리할 수 있습니다.
 
-**Q: 모노레포에서 사용할 수 있나요?**
-A: 네, 상위 디렉토리에 `.git`이 있고 하위 디렉토리에 `.kps`가 있는 구조를 지원합니다.
+</details>
 
-## Roadmap
+<details>
+<summary><b>Q: 모노레포에서 사용할 수 있나요?</b></summary>
 
-### v0.2.0
-- [ ] Homebrew 배포
-- [ ] `kps open` - 브라우저에서 문제 페이지 열기
-- [ ] `kps list` - 풀이 목록 조회
-- [ ] `kps stats` - 통계
+A: 네, 상위 디렉토리에 <code>.git</code>이 있고 하위 디렉토리에 <code>.kps</code>가 있는 구조를 지원합니다.
 
-### v0.3.0
-- [ ] 학습 로그 기능 (`.kps/history.json`)
-- [ ] 재도전 추적
-- [ ] 난이도 메타데이터
+</details>
 
-## 기여하기
+<details>
+<summary><b>Error: Config not found</b></summary>
+
+```
+Error: Config not found. Run 'kps init' first.
+```
+→ <code>kps init</code>으로 프로젝트 초기화 필요
+
+</details>
+
+<details>
+<summary><b>Error: Platform required</b></summary>
+
+```
+Error: Platform not specified. Use -b for BOJ or -p for Programmers.
+```
+→ 번호만 입력했을 때 <code>-b</code> 또는 <code>-p</code> 플래그 필요
+
+</details>
+
+<details>
+<summary><b>Error: Not a git repository</b></summary>
+
+```
+Error: Not a git repository. Run 'git init' first.
+```
+→ <code>kps solve</code>는 Git 저장소에서만 동작
+
+</details>
+
+<details>
+<summary><b>Error: No changes to commit</b></summary>
+
+```
+Error: No changes to commit. Did you save your solution file?
+```
+→ 파일 수정 후 저장했는지 확인
+
+</details>
+
+<details>
+<summary><b>⚠️ Push failed 메시지가 떠요.</b></summary>
+
+```
+⚠️ Commit succeeded, but push failed.
+Possible causes:
+  • No remote configured: run 'git remote -v'
+  • Authentication issue: check your credentials or SSH key
+To complete: run 'git push' manually
+```
+
+A: 커밋은 성공했지만 원격 저장소(Remote) 설정 문제나 권한 이슈로 푸시만 실패한 상태입니다.
+<code>git push</code>를 수동으로 입력해 확인해 보세요.
+
+</details>
+
+---
+
+## 🤝 기여하기
 
 이슈와 PR은 언제나 환영합니다!
 
-## 라이선스
+로컬 빌드:
+```bash
+swift build
+```
+
+---
+
+## 📄 라이선스
 
 MIT License - 자유롭게 사용하세요.
-
-## 개발자
-
-Made with ❤️ by [Your Name]
+[LICENSE](https://github.com/zaehorang/kps/blob/main/LICENSE)
