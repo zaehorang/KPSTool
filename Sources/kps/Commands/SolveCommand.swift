@@ -4,6 +4,12 @@ import Foundation
 /// 문제 풀이 완료 후 커밋 및 푸시 명령
 /// Git add, commit, push를 자동으로 수행
 struct SolveCommand: ParsableCommand {
+    /// 문제 풀이 컨텍스트 (문제 정보, 프로젝트 루트, 설정)
+    private struct ProblemContext {
+        let problem: Problem
+        let projectRoot: ProjectRoot
+        let config: KPSConfig
+    }
     static let configuration = CommandConfiguration(
         commandName: "solve",
         abstract: "문제 풀이 커밋 및 푸시"
@@ -22,28 +28,36 @@ struct SolveCommand: ParsableCommand {
 
     func run() throws {
         // 1. 문제 및 설정 로드
-        let (problem, projectRoot, config) = try loadProblemContext()
+        let context = try loadProblemContext()
 
         // 2. 파일 존재 확인
-        let filePath = try validateProblemFile(problem: problem, config: config, projectRoot: projectRoot)
+        let filePath = try validateProblemFile(
+            problem: context.problem,
+            config: context.config,
+            projectRoot: context.projectRoot
+        )
 
         // 3. Git 커밋
-        let commitHash = try performGitCommit(problem: problem, filePath: filePath, projectRoot: projectRoot.projectRoot)
+        let commitHash = try performGitCommit(
+            problem: context.problem,
+            filePath: filePath,
+            projectRoot: context.projectRoot.projectRoot
+        )
 
         // 4. Git 푸시 (옵션)
-        try performGitPush(projectRoot: projectRoot.projectRoot, commitHash: commitHash)
+        try performGitPush(projectRoot: context.projectRoot.projectRoot, commitHash: commitHash)
     }
 
     /// 문제 정보와 프로젝트 설정 로드
-    /// - Returns: (problem, projectRoot, config) 튜플
+    /// - Returns: 문제 풀이 컨텍스트
     /// - Throws: 플랫폼 결정, 설정 탐색/로드 실패 시 에러
-    private func loadProblemContext() throws -> (Problem, ProjectRoot, KPSConfig) {
+    private func loadProblemContext() throws -> ProblemContext {
         let platform = try platformOption.requirePlatform()
         let problem = Problem(platform: platform, number: number)
         let projectRoot = try ConfigLocator.locate().get()
         let config = try KPSConfig.load(from: projectRoot.configPath)
 
-        return (problem, projectRoot, config)
+        return ProblemContext(problem: problem, projectRoot: projectRoot, config: config)
     }
 
     /// 문제 파일 경로 계산 및 존재 확인
@@ -129,6 +143,6 @@ struct SolveCommand: ParsableCommand {
     /// - Parameter problem: 문제 정보
     /// - Returns: 형식: "solve: [Platform] {number}"
     private func generateCommitMessage(for problem: Problem) -> String {
-        return "solve: [\(problem.platform.displayName)] \(problem.number)"
+        "solve: [\(problem.platform.displayName)] \(problem.number)"
     }
 }

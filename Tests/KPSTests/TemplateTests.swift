@@ -24,7 +24,7 @@ struct TemplateTests {
         #expect(content.contains("TestProject"))
         #expect(content.contains("Test Author"))
         #expect(content.contains("https://acmicpc.net/problem/1000"))
-        #expect(content.contains("func solve1000()"))
+        #expect(content.contains("func _1000()"))
     }
 
     /// Programmers 문제에 대한 템플릿 변수 치환 테스트
@@ -46,7 +46,7 @@ struct TemplateTests {
         #expect(content.contains("TestProject"))
         #expect(content.contains("Test Author"))
         #expect(content.contains("https://school.programmers.co.kr/learn/courses/30/lessons/340207"))
-        #expect(content.contains("func solution340207()"))
+        #expect(content.contains("func _340207()"))
     }
 
     /// Programmers URL이 school.programmers.co.kr로 정규화되는지 확인
@@ -101,7 +101,7 @@ struct TemplateTests {
         let content = Template.generate(for: problem, config: config)
 
         // Then
-        #expect(content.contains("func solve12345()"))
+        #expect(content.contains("func _12345()"))
     }
 
     /// 함수명 생성 테스트 (Programmers)
@@ -119,6 +119,6 @@ struct TemplateTests {
         let content = Template.generate(for: problem, config: config)
 
         // Then
-        #expect(content.contains("func solution12345()"))
+        #expect(content.contains("func _12345()"))
     }
 }

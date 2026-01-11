@@ -4,6 +4,12 @@ import Foundation
 /// KPS 프로젝트 초기화 명령
 /// 현재 디렉토리에 .kps 디렉토리와 설정 파일을 생성
 struct InitCommand: ParsableCommand {
+    /// 초기화에 필요한 경로 컨텍스트
+    private struct PathContext {
+        let kpsDirectory: URL
+        let configPath: URL
+        let projectName: String
+    }
     static let configuration = CommandConfiguration(
         commandName: "init",
         abstract: "현재 디렉토리를 KPS 프로젝트로 초기화"
@@ -20,31 +26,31 @@ struct InitCommand: ParsableCommand {
 
     func run() throws {
         // 1. 경로 계산
-        let (kpsDirectory, configPath, projectName) = try calculatePaths()
+        let paths = try calculatePaths()
 
         // 2. 기존 설정 확인
-        try checkExistingConfig(at: configPath)
+        try checkExistingConfig(at: paths.configPath)
 
         // 3. 디렉토리 생성
-        try createKPSDirectory(at: kpsDirectory)
+        try createKPSDirectory(at: paths.kpsDirectory)
 
         // 4. 설정 생성 및 저장
-        try createAndSaveConfig(projectName: projectName, to: configPath)
+        try createAndSaveConfig(projectName: paths.projectName, to: paths.configPath)
 
         // 5. 성공 메시지
-        displaySuccessMessage(projectName: projectName)
+        displaySuccessMessage(projectName: paths.projectName)
     }
 
     /// .kps 디렉토리와 config.json 경로 계산
-    /// - Returns: (kpsDirectory, configPath, projectName) 튜플
-    private func calculatePaths() throws -> (URL, URL, String) {
+    /// - Returns: 초기화에 필요한 경로 컨텍스트
+    private func calculatePaths() throws -> PathContext {
         let fileManager = FileManager.default
         let currentDirectory = URL(fileURLWithPath: fileManager.currentDirectoryPath)
         let projectName = currentDirectory.lastPathComponent
         let kpsDirectory = currentDirectory.appendingPathComponent(".kps")
         let configPath = kpsDirectory.appendingPathComponent("config.json")
 
-        return (kpsDirectory, configPath, projectName)
+        return PathContext(kpsDirectory: kpsDirectory, configPath: configPath, projectName: projectName)
     }
 
     /// 기존 설정 파일이 있는지 확인

@@ -2,6 +2,13 @@ import Foundation
 
 /// Git 명령 실행 및 사전 조건 확인
 enum GitExecutor {
+    /// Process와 출력 파이프를 함께 관리하는 컨테이너
+    private struct ProcessCapture {
+        let process: Process
+        let stdoutPipe: Pipe?
+        let stderrPipe: Pipe?
+    }
+
     // MARK: - Process Helpers
 
     /// Git Process 생성 헬퍼
@@ -30,13 +37,13 @@ enum GitExecutor {
     ///   - workingDirectory: 작업 디렉토리
     ///   - captureStdout: stdout 캡처 여부
     ///   - captureStderr: stderr 캡처 여부
-    /// - Returns: (process, stdoutPipe, stderrPipe) 튜플
+    /// - Returns: Process와 파이프를 포함하는 컨테이너
     private static func createGitProcessWithCapture(
         arguments: [String],
         workingDirectory: URL? = nil,
         captureStdout: Bool = true,
         captureStderr: Bool = true
-    ) -> (Process, Pipe?, Pipe?) {
+    ) -> ProcessCapture {
         let process = createGitProcess(arguments: arguments, workingDirectory: workingDirectory)
 
         let stdoutPipe = captureStdout ? Pipe() : nil
@@ -49,7 +56,7 @@ enum GitExecutor {
             process.standardError = stderrPipe
         }
 
-        return (process, stdoutPipe, stderrPipe)
+        return ProcessCapture(process: process, stdoutPipe: stdoutPipe, stderrPipe: stderrPipe)
     }
 
     // MARK: - Public Methods
@@ -72,12 +79,12 @@ enum GitExecutor {
     /// Git이 설치되어 실행 가능한지 확인
     /// - Returns: git --version 성공 시 true
     private static func isGitAvailable() -> Bool {
-        let (process, _, _) = createGitProcessWithCapture(arguments: ["--version"])
+        let capture = createGitProcessWithCapture(arguments: ["--version"])
 
         do {
-            try process.run()
-            process.waitUntilExit()
-            return process.terminationStatus == 0
+            try capture.process.run()
+            capture.process.waitUntilExit()
+            return capture.process.terminationStatus == 0
         } catch {
             return false
         }
@@ -87,15 +94,15 @@ enum GitExecutor {
     /// - Parameter projectRoot: 확인할 디렉토리
     /// - Returns: git rev-parse --is-inside-work-tree 성공 시 true
     private static func isGitRepository(at projectRoot: URL) -> Bool {
-        let (process, _, _) = createGitProcessWithCapture(
+        let capture = createGitProcessWithCapture(
             arguments: ["rev-parse", "--is-inside-work-tree"],
             workingDirectory: projectRoot
         )
 
         do {
-            try process.run()
-            process.waitUntilExit()
-            return process.terminationStatus == 0
+            try capture.process.run()
+            capture.process.waitUntilExit()
+            return capture.process.terminationStatus == 0
         } catch {
             return false
         }
@@ -158,17 +165,17 @@ enum GitExecutor {
     /// - Returns: staged 변경사항이 없으면 true
     /// - Throws: Git 명령 실패 시 에러
     private static func isNothingToCommit(at projectRoot: URL) throws -> Bool {
-        let (process, _, _) = createGitProcessWithCapture(
+        let capture = createGitProcessWithCapture(
             arguments: ["diff", "--cached", "--quiet"],
             workingDirectory: projectRoot
         )
 
-        try process.run()
-        process.waitUntilExit()
+        try capture.process.run()
+        capture.process.waitUntilExit()
 
         // exit code 0: no differences (nothing to commit)
         // exit code 1: differences exist (something to commit)
-        return process.terminationStatus == 0
+        return capture.process.terminationStatus == 0
     }
 
     /// 현재 커밋 해시 조회 (short)
@@ -176,19 +183,19 @@ enum GitExecutor {
     /// - Returns: 짧은 형식의 커밋 해시
     /// - Throws: Git 명령 실패 시 에러
     private static func getCommitHash(at projectRoot: URL) throws -> String {
-        let (process, stdoutPipe, _) = createGitProcessWithCapture(
+        let capture = createGitProcessWithCapture(
             arguments: ["rev-parse", "--short", "HEAD"],
             workingDirectory: projectRoot
         )
 
-        try process.run()
-        process.waitUntilExit()
+        try capture.process.run()
+        capture.process.waitUntilExit()
 
-        guard process.terminationStatus == 0 else {
+        guard capture.process.terminationStatus == 0 else {
             throw KPSError.git(.failed("Failed to get commit hash"))
         }
 
-        guard let stdoutPipe else {
+        guard let stdoutPipe = capture.stdoutPipe else {
             throw KPSError.git(.failed("Failed to capture output"))
         }
 
@@ -203,21 +210,21 @@ enum GitExecutor {
     ///   - projectRoot: 프로젝트 루트 디렉토리
     /// - Throws: 명령 실패 시 KPSError.git(.failed)
     private static func runGit(arguments: [String], at projectRoot: URL) throws {
-        let (process, stdoutPipe, stderrPipe) = createGitProcessWithCapture(
+        let capture = createGitProcessWithCapture(
             arguments: arguments,
             workingDirectory: projectRoot
         )
 
         // 에러 메시지를 영어로 받기 위해 환경변수 설정
-        process.environment = ProcessInfo.processInfo.environment
-        process.environment?["LANG"] = "C"
-        process.environment?["LC_ALL"] = "C"
+        capture.process.environment = ProcessInfo.processInfo.environment
+        capture.process.environment?["LANG"] = "C"
+        capture.process.environment?["LC_ALL"] = "C"
 
-        try process.run()
-        process.waitUntilExit()
+        try capture.process.run()
+        capture.process.waitUntilExit()
 
-        guard process.terminationStatus == 0 else {
-            let message = extractErrorMessage(stdout: stdoutPipe, stderr: stderrPipe)
+        guard capture.process.terminationStatus == 0 else {
+            let message = extractErrorMessage(stdout: capture.stdoutPipe, stderr: capture.stderrPipe)
             throw KPSError.git(.failed(message))
         }
     }

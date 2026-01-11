@@ -14,16 +14,8 @@ struct Problem {
     }
 
     /// 문제 풀이 함수 이름
-    /// - BOJ: solve{number}
-    /// - Programmers: solution{number}
-    var functionName: String {
-        switch platform {
-        case .boj:
-            return "solve\(number)"
-        case .programmers:
-            return "solution\(number)"
-        }
-    }
+    /// - _{number}
+    var functionName: String { "_\(number)" }
 
     /// 파일의 전체 경로 계산
     /// - Parameters:
