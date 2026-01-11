@@ -160,6 +160,48 @@ enum GitExecutor {
         }
     }
 
+    /// 변경된 파일 목록 조회 (staged + unstaged + untracked)
+    /// - Parameter projectRoot: 프로젝트 루트 디렉토리
+    /// - Returns: 프로젝트 루트 기준 상대 경로 배열
+    /// - Throws: Git 명령 실패 시 KPSError.git(.failed)
+    static func getModifiedFiles(at projectRoot: URL) throws -> [String] {
+        let capture = createGitProcessWithCapture(
+            arguments: ["status", "--porcelain", "-uall"],
+            workingDirectory: projectRoot
+        )
+
+        try capture.process.run()
+        capture.process.waitUntilExit()
+
+        guard capture.process.terminationStatus == 0 else {
+            let message = extractErrorMessage(stdout: capture.stdoutPipe, stderr: capture.stderrPipe)
+            throw KPSError.git(.failed(message))
+        }
+
+        guard let stdoutPipe = capture.stdoutPipe else {
+            return []
+        }
+
+        let outputData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+        guard let output = String(data: outputData, encoding: .utf8) else {
+            return []
+        }
+
+        // git status --porcelain 포맷: "XY filename"
+        // X = staged status, Y = unstaged status
+        // 예: " M file.swift", "M  file.swift", "?? file.swift"
+        return output
+            .split(separator: "\n")
+            .compactMap { line -> String? in
+                // 최소 3자 이상 (상태 2자 + 파일명 1자 이상)
+                guard line.count >= 3 else { return nil }
+
+                // 앞 3글자 제거 (XY + 공백)
+                let filePath = line.dropFirst(3)
+                return String(filePath)
+            }
+    }
+
     /// git diff --cached로 staged 변경사항 확인
     /// - Parameter projectRoot: 프로젝트 루트 디렉토리
     /// - Returns: staged 변경사항이 없으면 true

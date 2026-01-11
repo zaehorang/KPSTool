@@ -62,6 +62,7 @@ enum KPSError: LocalizedError, Equatable {
     enum File: Equatable {
         case alreadyExists(String)
         case notFound(String)
+        case multipleFound([String])
         case permissionDenied(String)
         case ioError(Error)
 
@@ -71,6 +72,14 @@ enum KPSError: LocalizedError, Equatable {
                 return "File already exists: \(path)"
             case .notFound(let path):
                 return "File not found: \(path)"
+            case .multipleFound(let paths):
+                let fileList = paths.map { "  • \($0)" }.joined(separator: "\n")
+                return """
+                Multiple files found:
+                \(fileList)
+
+                Please remove or move duplicate files so only one remains.
+                """
             case .permissionDenied(let path):
                 return "Permission denied: \(path)"
             case .ioError(let error):
@@ -86,6 +95,8 @@ enum KPSError: LocalizedError, Equatable {
                  (.notFound(let lPath), .notFound(let rPath)),
                  (.permissionDenied(let lPath), .permissionDenied(let rPath)):
                 return lPath == rPath
+            case (.multipleFound(let lPaths), .multipleFound(let rPaths)):
+                return lPaths == rPaths
             case (.ioError, .ioError):
                 return true
             default:

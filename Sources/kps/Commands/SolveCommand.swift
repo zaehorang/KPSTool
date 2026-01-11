@@ -66,19 +66,27 @@ struct SolveCommand: ParsableCommand {
     ///   - config: 프로젝트 설정
     ///   - projectRoot: 프로젝트 루트
     /// - Returns: 검증된 파일 경로
-    /// - Throws: 파일이 존재하지 않으면 KPSError.file(.notFound)
+    /// - Throws: 파일이 존재하지 않으면 KPSError.file(.notFound), 중복 파일이 있으면 KPSError.file(.multipleFound)
     private func validateProblemFile(
         problem: Problem,
         config: KPSConfig,
         projectRoot: ProjectRoot
     ) throws -> URL {
-        let filePath = problem.filePath(projectRoot: projectRoot.projectRoot, config: config)
-
-        guard FileManager.default.fileExists(atPath: filePath.path) else {
-            throw KPSError.file(.notFound(filePath.path))
+        // 1. Try standard path first (backward compatible)
+        let standardPath = problem.filePath(projectRoot: projectRoot.projectRoot, config: config)
+        if FileManager.default.fileExists(atPath: standardPath.path) {
+            return standardPath
         }
 
-        return filePath
+        // 2. Standard path doesn't exist - search in modified files
+        let modifiedFiles = try GitExecutor.getModifiedFiles(at: projectRoot.projectRoot)
+        let foundPath = try problem.findInModifiedFiles(
+            modifiedFiles,
+            projectRoot: projectRoot.projectRoot,
+            config: config
+        )
+
+        return foundPath
     }
 
     /// Git add 및 commit 수행
