@@ -9,6 +9,23 @@
 
 ## [Unreleased]
 
+### Week 4: CI/CD 준비 (진행 중)
+
+**완료:**
+- CI/CD 가이드 문서 작성
+  - CICD_GUIDE.md 생성 (CI/CD 워크플로우 설명서)
+  - 워크플로우 동작 설명 (CI, Release)
+  - 해야 할 것 / 하지 말아야 할 것 가이드
+  - 트러블슈팅 가이드 (CI 실패, Release 실패, 캐시 문제)
+  - 릴리즈 프로세스 상세 설명
+  - DEVELOPMENT_GUIDE에 링크 추가
+
+**진행 중:**
+- GitHub Actions CI 워크플로우 구현
+- GitHub Actions Release 워크플로우 구현
+
+---
+
 ### Week 3: Git 연동 및 릴리즈 (완료) ✅
 
 **완료:**

@@ -431,6 +431,7 @@ brew install kps
 ## 참고
 
 - **기술 아키텍처**: [ARCHITECTURE.md](ARCHITECTURE.md)
+- **CI/CD 가이드**: [CICD_GUIDE.md](CICD_GUIDE.md)
 - **에이전트 워크플로우**: [../CLAUDE.md](../CLAUDE.md)
 - **코드 스타일**: [SWIFT_STYLE_GUIDE.md](SWIFT_STYLE_GUIDE.md)
 - **커밋 규칙**: [COMMIT_Convention.md](COMMIT_Convention.md)
