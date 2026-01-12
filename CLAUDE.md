@@ -50,6 +50,75 @@ PM Skill 로직은 `.claude/skills/pm/SKILL.md`에 정의되어 있으며, 새 �
 
 ---
 
+## Git 워크플로우
+
+### 브랜치 전략
+
+**모든 새 작업은 브랜치에서 시작합니다.**
+
+```bash
+# main에서 최신 코드 받기
+git checkout main
+git pull origin main
+
+# 새 브랜치 생성
+git checkout -b feat/add-new-feature
+```
+
+### 브랜치 네이밍 규칙
+
+```
+<type>/<description>
+```
+
+**Type:**
+- `feat/` - 새로운 기능 추가
+- `fix/` - 버그 수정
+- `refactor/` - 리팩토링
+- `docs/` - 문서 작업
+- `test/` - 테스트 추가/수정
+- `chore/` - 기타 (의존성, 설정 등)
+
+**Examples:**
+- ✅ `feat/add-config-validation`
+- ✅ `fix/url-parser-null-handling`
+- ✅ `refactor/simplify-git-executor`
+- ✅ `docs/update-architecture-md`
+- ❌ `add-new-feature` (type 없음)
+- ❌ `feat-add-feature` (슬래시 없음)
+
+### Pull Request 프로세스
+
+1. **작업 완료 후 푸시**
+   ```bash
+   git push origin <branch-name>
+   ```
+
+2. **GitHub에서 PR 생성**
+   - Base: `main`
+   - Compare: `<your-branch>`
+   - 제목: 커밋 메시지 형식과 동일
+   - 설명: 변경 내용, 테스트 방법 작성
+
+3. **사용자 리뷰 대기**
+   - 사용자가 코드 리뷰
+   - 수정 요청 시 추가 커밋
+
+4. **머지**
+   - 사용자 승인 후 머지
+   - Squash and merge (권장) 또는 Merge commit
+   - 브랜치 자동 삭제
+
+### ⚠️ 중요 규칙
+
+- ❌ **main 브랜치에 직접 커밋 금지**
+- ❌ **PR 없이 머지 금지**
+- ✅ **모든 변경은 PR을 통해서만**
+- ✅ **테스트 통과 필수**
+- ✅ **린터 경고 해결 필수**
+
+---
+
 ## 기술 스택
 
 | 구성 요소 | 선택 |
@@ -186,8 +255,10 @@ Red → Green → Refactor
 **자세한 커밋 규칙은 [COMMIT_Convention.md](docs/COMMIT_Convention.md)를 참조하세요.**
 
 **커밋 타이밍:**
-- 하루 분량 TODO 완료 시 사용자 검사 요청
-- 사용자 승인 후 커밋 진행 (모든 테스트 통과, 린터 경고 해결 필수)
+- 기능 단위로 커밋 (작은 단위로 자주 커밋)
+- 각 커밋은 독립적으로 빌드/테스트 가능해야 함
+- 브랜치 작업 완료 시 PR 생성하여 사용자 리뷰 요청
+- 모든 테스트 통과, 린터 경고 해결 필수
 
 **형식:** `feat:`, `test:`, `refactor:`, `fix:`, `docs:`, `chore:` 사용
 
@@ -223,14 +294,62 @@ Red → Green → Refactor
 ✅ 사용자 승인 후: 이슈에 댓글 달기
 ```
 
-### 작업 워크플로우
+### 작업 워크플로우 (브랜치 기반)
 
-1. TODO에서 다음 미완료 항목 찾기
-2. 실패하는 테스트 작성 (TDD Red)
-3. 테스트 통과하는 최소 코드 구현 (TDD Green)
-4. 필요시 구조 개선 (Refactor)
-5. 복잡한 로직/Public API에 문서화 주석 추가
-6. 하루 분량 완료 시 사용자 검사 요청 → 승인 후 커밋
+**새로운 작업 시작 시:**
+
+1. **브랜치 생성**
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b <type>/<description>
+   ```
+
+   **브랜치 네이밍:**
+   - `feat/add-config-validation` - 새 기능
+   - `fix/url-parser-bug` - 버그 수정
+   - `refactor/improve-git-executor` - 리팩토링
+   - `docs/update-readme` - 문서 작업
+   - `test/add-template-tests` - 테스트 추가
+   - `chore/update-dependencies` - 의존성 업데이트
+
+2. **TDD 사이클로 작업**
+   - 실패하는 테스트 작성 (Red)
+   - 테스트 통과하는 최소 코드 구현 (Green)
+   - 구조 개선 (Refactor)
+   - 복잡한 로직/Public API에 문서화 주석 추가
+
+3. **작업 완료 후 커밋**
+   ```bash
+   # 테스트 실행
+   swift test
+
+   # 커밋
+   git add .
+   git commit -m "feat: add config validation"
+   ```
+
+4. **브랜치 푸시**
+   ```bash
+   git push origin <branch-name>
+   ```
+
+5. **Pull Request 생성**
+   - GitHub에서 PR 생성
+   - 설명 작성 (변경 내용, 테스트 방법)
+   - 사용자 리뷰 요청
+
+6. **리뷰 후 머지**
+   - 사용자 승인 후 main에 머지
+   - Squash and merge 또는 Merge commit (사용자 선택)
+   - 브랜치 삭제
+
+**중요:**
+- ✅ 모든 새 작업은 **반드시 새 브랜치**에서 시작
+- ✅ main 브랜치에 직접 커밋 금지
+- ✅ PR 없이 머지 금지
+- ✅ 테스트 통과 필수 (swift test)
+- ✅ 린터 경고 해결 필수
 
 ### 테스트 작성 가이드 (Swift Testing)
 
