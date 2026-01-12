@@ -328,6 +328,162 @@ git tag -a v0.2.1 -m "..."  # 새 패치 버전 사용
 
 ---
 
+### GitHub Actions CI 구축 실패 (미해결)
+
+**상태**: ⚠️ 미해결 - CI 워크플로우 없음
+
+**발생 시기**: 2026년 1월 12일
+
+---
+
+#### 문제 1: SwiftLint SPM Plugin + Swift 6.1 호환성
+
+**증상**:
+```
+error: a prebuild command cannot use executables built from source,
+including executable target 'swiftlint'
+error: build planning stopped due to build-tool plugin failures
+```
+
+**환경**:
+- GitHub Actions `macos-latest` = macOS 15
+- Xcode 16.4
+- Swift 6.1.2
+
+**근본 원인**:
+- Swift 6.1 SPM에 prebuild command 관련 버그 존재
+- 공식 이슈: https://github.com/realm/SwiftLint/issues/5376
+- SwiftLint 문제가 아닌 **SPM 자체의 버그**
+
+**시도한 해결책 (모두 실패)**:
+
+1. ❌ **`--disable-sandbox` 플래그**
+   ```yaml
+   swift build --disable-sandbox
+   ```
+   - Swift 버전이 해당 옵션을 지원하지 않음
+   - 에러: `Unknown option '--disable-sandbox'`
+
+2. ❌ **`--disable-build-tool-plugins` 플래그**
+   ```yaml
+   swift build --disable-build-tool-plugins
+   ```
+   - Swift 버전이 해당 옵션을 지원하지 않음
+   - 에러: `Unknown option '--disable-build-tool-plugins'`
+
+3. ❌ **sed로 Package.swift 수정**
+   ```yaml
+   sed -i '' '/plugins:/,/\]/d' Package.swift
+   swift build
+   ```
+   - 기술적으로 작동하지만 해킹 같은 방법
+   - 유지보수성 나쁨
+
+4. ❌ **Binary Plugin (SimplyDanny/SwiftLintPlugins)**
+   ```swift
+   .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", from: "0.57.0")
+   ```
+   - 동일한 prebuild command 에러 발생
+   - Binary plugin도 내부적으로 같은 메커니즘 사용
+
+---
+
+#### 문제 2: macOS 14 + ArgumentParser 1.7.0 호환성
+
+**시도**:
+```yaml
+runs-on: macos-14  # Swift 6.0.x 사용하여 SPM 버그 우회
+```
+
+**새로운 에러**:
+```
+error: Access level on imports require '-enable-experimental-feature AccessLevelOnImport'
+internal import os
+^~~~~~~~~
+```
+
+**원인**:
+- ArgumentParser 1.7.0이 Swift 6.x 전용 문법 사용 (`internal import`)
+- macOS 14의 Swift 6.0.x는 이 문법을 지원하지 않음
+
+**딜레마**:
+```
+┌─────────────────────────────────────────────────────┐
+│              GitHub Actions 환경                     │
+├─────────────────────────────────────────────────────┤
+│                                                      │
+│  macOS 15 (Swift 6.1.2)                             │
+│  ├─ SwiftLint Plugin: ❌ SPM 버그                   │
+│  └─ ArgumentParser 1.7.0: ✅ 작동                    │
+│                                                      │
+│  macOS 14 (Swift 6.0.x)                             │
+│  ├─ SwiftLint Plugin: ✅ 작동 가능                   │
+│  └─ ArgumentParser 1.7.0: ❌ 문법 미지원             │
+│                                                      │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+#### 문제 3: Brew 방식의 한계
+
+**시도**:
+```yaml
+- name: Run SwiftLint
+  run: |
+    brew install swiftlint
+    swiftlint lint --strict
+```
+
+**단점**:
+- ❌ 로컬 개발자는 `swift build` 시 자동 lint 안 됨
+- ❌ CI에서 매번 brew 설치 시간 추가 (~10초)
+- ❌ 로컬과 CI 환경 불일치
+- ❌ 기여자에게 별도 SwiftLint 설치 요구
+
+---
+
+#### 해결 방향 (TODO)
+
+**1. Swift 6.2 릴리즈 대기**
+- SPM prebuild command 버그 수정 예정
+- 릴리즈 시기: 미정
+
+**2. ArgumentParser 다운그레이드**
+```swift
+.package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.3.0")
+```
+- 1.3.x는 Swift 5.9~6.0 호환
+- macOS 14 + SwiftLint 플러그인 작동
+- 단점: 최신 기능 사용 불가
+
+**3. 커스텀 Swift 설치 액션**
+```yaml
+- uses: swift-actions/setup-swift@v1
+  with:
+    swift-version: "6.0.3"
+```
+- 특정 Swift 버전 사용
+- 검증 필요
+
+**4. 로컬 개발 우선, CI는 나중에**
+- 현재 상태: 로컬에서 SwiftLint 플러그인 작동
+- CI는 v0.2.0 이후 재시도
+
+---
+
+#### 타임라인
+
+**2026-01-12**:
+- ❌ 첫 CI 시도 (prebuild error)
+- ❌ Binary plugin 시도 (동일 에러)
+- ❌ macOS 14 시도 (ArgumentParser 호환성)
+- ❌ Brew 방식 적용 (불만족)
+- ✅ 문제 상황 문서화
+- ✅ CI 워크플로우 제거 (나중에 해결)
+
+---
+
 ### Release 실패 시
 
 **증상**: 태그 푸시 후 GitHub Release 생성 안 됨
