@@ -35,10 +35,10 @@ struct InitCommand: ParsableCommand {
         try createKPSDirectory(at: paths.kpsDirectory)
 
         // 4. 설정 생성 및 저장
-        try createAndSaveConfig(projectName: paths.projectName, to: paths.configPath)
+        let xcodeProjectPath = try createAndSaveConfig(projectName: paths.projectName, to: paths.configPath)
 
         // 5. 성공 메시지
-        displaySuccessMessage(projectName: paths.projectName)
+        displaySuccessMessage(projectName: paths.projectName, xcodeProjectPath: xcodeProjectPath)
     }
 
     /// .kps 디렉토리와 config.json 경로 계산
@@ -83,23 +83,54 @@ struct InitCommand: ParsableCommand {
     /// - Parameters:
     ///   - projectName: 프로젝트 이름
     ///   - configPath: 저장할 경로
+    /// - Returns: 감지된 Xcode 프로젝트 경로 (Optional)
     /// - Throws: 저장 실패 시 에러
-    private func createAndSaveConfig(projectName: String, to configPath: URL) throws {
+    private func createAndSaveConfig(projectName: String, to configPath: URL) throws -> String? {
+        // Detect Xcode project
+        let xcodeProjectPath = findXcodeProject()
+
         let config = KPSConfig(
             author: author,
             sourceFolder: source,
-            projectName: projectName
+            projectName: projectName,
+            xcodeProjectPath: xcodeProjectPath
         )
         try config.save(to: configPath)
+
+        return xcodeProjectPath
+    }
+
+    /// 현재 디렉토리에서 Xcode 프로젝트 파일 찾기
+    /// - Returns: .xcodeproj 파일명 (발견 시), 없으면 nil
+    private func findXcodeProject() -> String? {
+        let fileManager = FileManager.default
+        let currentDir = URL(fileURLWithPath: fileManager.currentDirectoryPath)
+
+        guard let contents = try? fileManager.contentsOfDirectory(
+            at: currentDir,
+            includingPropertiesForKeys: nil
+        ) else {
+            return nil
+        }
+
+        let xcodeProj = contents.first { $0.pathExtension == "xcodeproj" }
+        return xcodeProj?.lastPathComponent
     }
 
     /// 초기화 성공 메시지 출력
-    /// - Parameter projectName: 프로젝트 이름
-    private func displaySuccessMessage(projectName: String) {
+    /// - Parameters:
+    ///   - projectName: 프로젝트 이름
+    ///   - xcodeProjectPath: 감지된 Xcode 프로젝트 경로 (Optional)
+    private func displaySuccessMessage(projectName: String, xcodeProjectPath: String?) {
         Console.success("KPS initialized!")
         Console.info("Project: \(projectName)")
         Console.info("Author: \(author)")
         Console.info("Source folder: \(source)")
+
+        if let xcodeProj = xcodeProjectPath {
+            Console.info("Detected Xcode project: \(xcodeProj)", icon: "🔍")
+        }
+
         Console.saveInfo("Config saved to: .kps/config.json")
     }
 }
