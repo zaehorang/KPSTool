@@ -121,14 +121,48 @@ sudo install -m 0755 .build/release/kps /usr/local/bin/kps
 
 ---
 
-## 🏃 Quick Start (3분 완성)
+## 🏃 Quick Start
 
-### 1) 프로젝트 초기화
+### 신규 프로젝트 시작하기
+
+**1단계: Xcode 프로젝트 생성**
+1. Xcode 실행
+2. File > New > Project
+3. macOS > Command Line Tool 선택
+4. 원하는 위치에 저장 (예: `~/Documents/AlgorithmStudy`)
+
+**2단계: KPS 초기화**
+```bash
+cd ~/Documents/AlgorithmStudy
+kps init -a "Your Name" -s "Sources"
+# 🔍 Detected Xcode project: AlgorithmStudy.xcodeproj
+```
+
+**3단계: 문제 풀이 시작**
+```bash
+kps new 1000 -b         # 문제 파일 생성
+kps open 1000 -b        # Xcode에서 열기
+# ... Xcode에서 문제 풀이 ...
+kps solve 1000 -b       # 커밋 & 푸시
+```
+
+---
+
+### 기존 프로젝트에 적용하기
+
+이미 Xcode 프로젝트가 있는 경우:
 
 ```bash
-kps init -a "zaehorang" -s "Sources"
+cd ~/Documents/MyProject
+kps config xcodeProjectPath "MyProject.xcodeproj"
+# ✅ Config updated!
+
+kps open  # Xcode에서 최근 파일 열기
 ```
-> **설명**: 작성자 이름과 소스 폴더를 지정하여 KPS 설정 생성 (`.kps/config.json`)
+
+---
+
+## ⌨️ 명령어 상세 가이드
 
 ### 2) 문제 파일 생성
 
@@ -229,6 +263,33 @@ kps new 340207 -p
 - URL 사용 시 플래그 불필요
 - 번호 사용 시 플래그 필수
 - 두 플래그 동시 사용 불가
+
+---
+
+### `kps open`
+
+문제 파일을 Xcode에서 엽니다.
+
+```bash
+# 최근 파일 열기
+kps open
+
+# 특정 문제 열기
+kps open 1000 -b
+kps open 340207 -p
+```
+
+**동작 방식:**
+- Xcode 프로젝트가 설정되어 있으면 `xed -p`로 프로젝트와 함께 파일 열기
+- 프로젝트가 없으면 시스템 기본 에디터로 열기
+- xed 없으면 자동으로 기본 에디터로 fallback
+
+**옵션:**
+- `-b, --boj`: BOJ 플랫폼
+- `-p, --programmers`: Programmers 플랫폼
+
+**요구사항:**
+- Xcode 프로젝트 사용 시: Xcode Command Line Tools 필요
 
 ---
 
@@ -418,6 +479,37 @@ To complete: run 'git push' manually
 
 A: 커밋은 성공했지만 원격 저장소(Remote) 설정 문제나 권한 이슈로 푸시만 실패한 상태입니다.
 <code>git push</code>를 수동으로 입력해 확인해 보세요.
+
+</details>
+
+<details>
+<summary><b>Q: kps open이 기본 에디터로 열려요 (Xcode가 아닌)</b></summary>
+
+A: Xcode 프로젝트 경로가 설정되지 않았습니다. 다음 명령어로 설정하세요:
+
+```bash
+kps config xcodeProjectPath "YourProject.xcodeproj"
+```
+
+또는 `kps init --force`로 재초기화하면 자동 감지됩니다.
+
+</details>
+
+<details>
+<summary><b>Q: Xcode Command Line Tools가 없다는 경고가 떠요</b></summary>
+
+```
+⚠️ xed not available. Install Xcode Command Line Tools.
+✔ Falling back to default editor...
+```
+
+A: Xcode Command Line Tools를 설치하세요:
+
+```bash
+xcode-select --install
+```
+
+설치 후 `kps open` 명령어가 Xcode에서 정상 작동합니다.
 
 </details>
 
