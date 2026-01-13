@@ -5,6 +5,7 @@ struct KPSConfig: Codable {
     var author: String
     var sourceFolder: String
     var projectName: String
+    var xcodeProjectPath: String?
 
     /// 설정을 JSON 파일로 저장 (atomic write 사용)
     /// - Parameter url: 설정이 저장될 파일의 URL
@@ -43,7 +44,7 @@ struct KPSConfig: Codable {
 
     /// 특정 키의 값 조회
     /// - Parameter key: 조회할 설정 키
-    /// - Returns: 해당 키의 값
+    /// - Returns: 해당 키의 값 (xcodeProjectPath가 nil이면 빈 문자열)
     func value(for key: ConfigKey) -> String {
         switch key {
         case .author:
@@ -52,12 +53,14 @@ struct KPSConfig: Codable {
             return sourceFolder
         case .projectName:
             return projectName
+        case .xcodeProjectPath:
+            return xcodeProjectPath ?? ""
         }
     }
 
     /// 특정 키의 값 수정
     /// - Parameters:
-    ///   - value: 새로운 값
+    ///   - value: 새로운 값 (xcodeProjectPath의 경우 빈 문자열이면 nil로 설정)
     ///   - key: 수정할 설정 키
     mutating func setValue(_ value: String, for key: ConfigKey) {
         switch key {
@@ -67,6 +70,8 @@ struct KPSConfig: Codable {
             sourceFolder = value
         case .projectName:
             projectName = value
+        case .xcodeProjectPath:
+            xcodeProjectPath = value.isEmpty ? nil : value
         }
     }
 }

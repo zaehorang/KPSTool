@@ -3,6 +3,7 @@ enum ConfigKey: String, CaseIterable {
     case author
     case sourceFolder
     case projectName
+    case xcodeProjectPath
 
     var description: String {
         switch self {
@@ -12,6 +13,8 @@ enum ConfigKey: String, CaseIterable {
             return "소스 폴더 경로 (예: 'Sources')"
         case .projectName:
             return "프로젝트 이름"
+        case .xcodeProjectPath:
+            return "Xcode 프로젝트 경로 (예: 'AlgorithmStudy.xcodeproj')"
         }
     }
 
