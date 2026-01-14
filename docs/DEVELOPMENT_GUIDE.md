@@ -280,6 +280,7 @@ kps config author "New Name"
 - `author`: 작성자 이름
 - `sourceFolder`: 소스 폴더 경로
 - `projectName`: 프로젝트 이름
+- `xcodeProjectPath`: Xcode 프로젝트 경로 (선택 사항)
 
 **처리 흐름:**
 
@@ -294,6 +295,118 @@ kps config author "New Name"
 
 ---
 
+### 2.5 `kps open`
+
+문제 파일을 Xcode에서 엽니다.
+
+```bash
+# 최근 파일 열기 (history 기반)
+kps open
+
+# 특정 문제 파일 열기
+kps open 1000 -b
+kps open 340207 -p
+```
+
+**옵션:**
+
+| 옵션 | 축약 | 필수 | 설명 |
+|------|------|------|------|
+| `--boj` | `-b` | X | BOJ 플랫폼 (번호 지정 시 필수) |
+| `--programmers` | `-p` | X | Programmers 플랫폼 (번호 지정 시 필수) |
+
+**처리 흐름:**
+
+```
+1. ConfigLocator로 프로젝트 루트 찾기
+2. Config 로드
+
+3. 파일 경로 결정
+   ├─ 번호 지정됨: platform + number → filePath
+   └─ 번호 없음: history.json에서 mostRecent() → filePath
+
+4. 파일 열기
+   ├─ xcodeProjectPath 설정됨
+   │  ├─ 프로젝트 파일 존재 확인
+   │  └─ xed -p project.xcodeproj file.swift
+   └─ xcodeProjectPath 없음
+      └─ open file.swift (시스템 기본 에디터)
+
+5. xed 실패 시 fallback
+   ├─ xed not found → 경고 + open으로 fallback
+   └─ 기타 오류 → 에러 throw
+```
+
+**Xcode 통합 동작:**
+
+```bash
+# Xcode 프로젝트 경로가 설정되어 있으면:
+$ kps open 1000 -b
+
+# 실행되는 명령어:
+xed -p AlgorithmStudy.xcodeproj AlgorithmStudy/BOJ/1000.swift
+
+# 결과:
+# - Xcode에서 AlgorithmStudy.xcodeproj 열림
+# - 1000.swift가 프로젝트 네비게이터에서 활성화됨
+# - 빌드/실행 가능한 상태
+```
+
+**-p 플래그 필요성:**
+
+`xed -p`의 `-p` 플래그는 **프로젝트 컨텍스트**에서 파일을 열기 위해 필수입니다:
+- `-p` 있음: 파일이 프로젝트 네비게이터 안에서 열림
+- `-p` 없음: 파일이 별도 창으로 열림 (빌드 불가)
+
+**History 기반 최근 파일:**
+
+`kps open` (인자 없음) 실행 시:
+
+1. `.kps/history.json` 로드
+2. `mostRecent()` 호출 → 가장 최근 `HistoryEntry` 반환
+3. `entry.filePath`로 파일 열기
+
+**에러 처리:**
+
+| 상황 | 처리 |
+|------|------|
+| History 없음 | `KPSError.history(.noRecentFile)` |
+| 최근 파일 삭제됨 | `KPSError.history(.fileDeleted(path))` |
+| Xcode 프로젝트 없음 | 경고 + `open` fallback |
+| xed 미설치 | 경고 + `open` fallback |
+| 파일 없음 | `KPSError.file(.notFound(path))` |
+
+**출력 예시:**
+
+```bash
+# 성공
+$ kps open 1000 -b
+✅ Opened: /Users/user/Project/Sources/BOJ/1000.swift
+
+# Xcode 프로젝트 없음 (fallback)
+$ kps open
+⚠️ Xcode project not found: AlgorithmStudy.xcodeproj
+💡 Run 'kps init --force' to re-detect Xcode project
+✔ Falling back to default editor...
+✅ Opened: /Users/user/Project/Sources/BOJ/1000.swift
+
+# xed 없음 (fallback)
+$ kps open
+⚠️ xed not available. Install Xcode Command Line Tools.
+✔ Falling back to default editor...
+✅ Opened: /Users/user/Project/Sources/BOJ/1000.swift
+```
+
+**요구사항:**
+
+- Xcode 프로젝트 사용 시: Xcode Command Line Tools 필요
+  ```bash
+  xcode-select --install
+  ```
+- History 기능: `kps new` 명령어로 파일 생성 시 자동 기록
+
+---
+
 ## 3. 테스트 전략
 
 ### 3.1 단위 테스트 (필수)
@@ -301,9 +414,10 @@ kps config author "New Name"
 | 대상 | 테스트 케이스 |
 |------|--------------|
 | **URLParser** | BOJ URL, Programmers URL, boj.kr 단축, www 접두사, http URL, query string, fragment, 잘못된 URL |
-| **Config** | JSON 인코딩/디코딩, 파일 저장/로드, ConfigKey 검증 |
+| **Config** | JSON 인코딩/디코딩, 파일 저장/로드, ConfigKey 검증, xcodeProjectPath 인코딩/디코딩 |
 | **ConfigLocator** | 현재 디렉토리, 상위 디렉토리, config 없음, .git만 있음, 모노레포, ProjectRoot 구조 검증 |
 | **Template** | 변수 치환, 날짜 포맷 |
+| **History** | JSON 인코딩/디코딩, addEntry 순서 보존, mostRecent 반환, atomic write, 파일 로드 실패 처리 |
 
 **실행:**
 ```bash
@@ -323,8 +437,15 @@ kps config
 # git 있는 환경에서 전체 흐름
 git init
 kps new 1001 -b
+kps open 1001 -b  # Xcode에서 파일 열기
 # 파일에 코드 작성
 kps solve 1001 -b --no-push
+
+# Xcode 통합 테스트
+kps config xcodeProjectPath "MyProject.xcodeproj"
+kps new 9999 -b
+kps open 9999 -b  # Xcode 프로젝트와 함께 열려야 함
+kps open  # 최근 파일 (9999.swift) 열기
 ```
 
 ### 3.3 테스트하지 않는 것

@@ -44,7 +44,13 @@ struct SolveCommand: ParsableCommand {
             projectRoot: context.projectRoot.projectRoot
         )
 
-        // 4. Git 푸시 (옵션)
+        // 4. History 업데이트 (solved = true)
+        updateHistoryWithSolved(
+            problem: context.problem,
+            projectRoot: context.projectRoot
+        )
+
+        // 5. Git 푸시 (옵션)
         try performGitPush(projectRoot: context.projectRoot.projectRoot, commitHash: commitHash)
     }
 
@@ -152,5 +158,36 @@ struct SolveCommand: ParsableCommand {
     /// - Returns: 형식: "solve: [Platform] {number}"
     private func generateCommitMessage(for problem: Problem) -> String {
         "solve: [\(problem.platform.displayName)] \(problem.number)"
+    }
+
+    /// History에서 문제를 풀이 완료로 표시
+    /// - Parameters:
+    ///   - problem: 문제 정보
+    ///   - projectRoot: 프로젝트 루트
+    /// - Note: history.json이 없거나 업데이트 실패 시 경고만 출력 (커밋은 성공했으므로)
+    private func updateHistoryWithSolved(
+        problem: Problem,
+        projectRoot: ProjectRoot
+    ) {
+        let historyPath = projectRoot.projectRoot
+            .appendingPathComponent(".kps")
+            .appendingPathComponent("history.json")
+
+        // history 파일이 없으면 스킵 (NewCommand를 거치지 않은 경우)
+        guard FileManager.default.fileExists(atPath: historyPath.path) else {
+            return
+        }
+
+        do {
+            var history = try KPSHistory.load(from: historyPath)
+            history.markAsSolved(
+                problemNumber: problem.number,
+                platform: problem.platform
+            )
+            try history.save(to: historyPath)
+        } catch {
+            // 에러 발생 시 경고만 출력 (커밋은 이미 성공했으므로)
+            Console.warning("Failed to update history: \(error.localizedDescription)")
+        }
     }
 }

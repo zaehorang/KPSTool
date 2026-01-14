@@ -27,7 +27,10 @@ struct NewCommand: ParsableCommand {
         // 4. 파일 생성
         try createProblemFile(problem: problem, config: config, at: filePath)
 
-        // 5. 성공 메시지 출력
+        // 5. 히스토리 기록
+        try recordToHistory(problem: problem, filePath: filePath, projectRoot: projectRoot)
+
+        // 6. 성공 메시지 출력
         displaySuccessMessage(for: problem, at: filePath)
     }
 
@@ -97,6 +100,48 @@ struct NewCommand: ParsableCommand {
         // 템플릿 생성 및 파일 작성
         let content = Template.generate(for: problem, config: config)
         try fileManager.writeFile(content: content, to: filePath)
+    }
+
+    /// 문제 생성을 히스토리에 기록
+    /// - Parameters:
+    ///   - problem: 생성된 문제 정보
+    ///   - filePath: 파일 절대 경로
+    ///   - projectRoot: 프로젝트 루트
+    /// - Throws: 히스토리 저장 실패 시 에러
+    private func recordToHistory(
+        problem: Problem,
+        filePath: URL,
+        projectRoot: ProjectRoot
+    ) throws {
+        let historyPath = projectRoot.projectRoot
+            .appendingPathComponent(".kps")
+            .appendingPathComponent("history.json")
+
+        // 기존 히스토리 로드 또는 새로 생성
+        var history: KPSHistory
+        if FileManager.default.fileExists(atPath: historyPath.path) {
+            history = try KPSHistory.load(from: historyPath)
+        } else {
+            history = KPSHistory()
+        }
+
+        // 상대 경로 계산 (project root 기준)
+        let relativePath = filePath.path.replacingOccurrences(
+            of: projectRoot.projectRoot.path + "/",
+            with: ""
+        )
+
+        // 새 항목 추가
+        let entry = HistoryEntry(
+            problemNumber: problem.number,
+            platform: problem.platform,
+            filePath: relativePath,
+            timestamp: Date()
+        )
+        history.addEntry(entry)
+
+        // 히스토리 저장
+        try history.save(to: historyPath)
     }
 
     /// 파일 생성 성공 메시지 및 다음 행동 가이드 출력
