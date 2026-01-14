@@ -63,6 +63,28 @@
   - `kps solve`에서 git status 기반 파일 검색
   - 플랫폼/번호 없이 현재 디렉토리에서 수정된 파일 자동 탐지
   - 다중 파일 매칭 감지 및 에러 처리
+  - `kps open`에서 하위 폴더 재귀 탐색
+  - FileManager.subpaths() 기반 패턴 매칭
+  - 폴더 구조 자유도 향상 (예: BOJ/Floyd/1719.swift)
+- History 풀이 상태 추적
+  - HistoryEntry에 `solved: Bool` 필드 추가
+  - `markAsSolved()` 메서드 구현
+  - 하위 호환성 지원 (decodeIfPresent)
+  - SolveCommand에서 커밋 성공 시 자동 업데이트
+  - 향후 `kps list` 명령어 준비
+  - 테스트 추가 (5개, 총 70개 테스트 통과)
+- Xcode 프로젝트 통합
+  - Config에 `xcodeProjectPath` 필드 추가
+  - `kps init`에서 Xcode 프로젝트 자동 감지
+  - `kps open` 명령어 구현 (최근/특정 파일 열기)
+  - xed 명령으로 프로젝트와 파일 함께 열기
+  - xed 미지원 시 시스템 기본 에디터로 폴백
+  - History 기반 최근 파일 추적
+  - xcodeProjectPath 미설정 시 설정 안내 메시지 추가
+  - `kps open` (최근 파일 모드) 하위 폴더 재귀 탐색 지원
+  - 파일 이동 감지 및 경로 변경 안내
+  - KPSError.history, KPSError.open 에러 케이스 추가
+  - README에 Getting Started 가이드 추가
 - 문서 재구성 완료
   - ARCHITECTURE.md 생성 (프로젝트 정의, 기술 설계)
   - DEVELOPMENT_GUIDE.md 생성 (명령어 스펙, 릴리즈 가이드)
