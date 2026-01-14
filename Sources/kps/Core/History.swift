@@ -6,6 +6,47 @@ struct HistoryEntry: Codable, Equatable {
     let platform: Platform
     let filePath: String  // relative to project root
     let timestamp: Date
+    var solved: Bool  // 문제 풀이 완료 여부
+
+    /// HistoryEntry 생성자
+    /// - Parameters:
+    ///   - problemNumber: 문제 번호
+    ///   - platform: 플랫폼 (BOJ, Programmers)
+    ///   - filePath: 프로젝트 루트 기준 상대 경로
+    ///   - timestamp: 생성 시간
+    ///   - solved: 풀이 완료 여부 (기본값: false)
+    init(
+        problemNumber: String,
+        platform: Platform,
+        filePath: String,
+        timestamp: Date,
+        solved: Bool = false
+    ) {
+        self.problemNumber = problemNumber
+        self.platform = platform
+        self.filePath = filePath
+        self.timestamp = timestamp
+        self.solved = solved
+    }
+
+    // Codable 구현 (하위 호환성을 위해)
+    enum CodingKeys: String, CodingKey {
+        case problemNumber
+        case platform
+        case filePath
+        case timestamp
+        case solved
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        problemNumber = try container.decode(String.self, forKey: .problemNumber)
+        platform = try container.decode(Platform.self, forKey: .platform)
+        filePath = try container.decode(String.self, forKey: .filePath)
+        timestamp = try container.decode(Date.self, forKey: .timestamp)
+        // solved 필드가 없으면 기본값 false 사용 (하위 호환성)
+        solved = try container.decodeIfPresent(Bool.self, forKey: .solved) ?? false
+    }
 }
 
 /// KPS 문제 풀이 히스토리 관리자
@@ -29,6 +70,19 @@ struct KPSHistory: Codable {
     /// - Returns: 가장 최근 항목 (배열의 마지막), 히스토리가 비어있으면 nil
     func mostRecent() -> HistoryEntry? {
         entries.last
+    }
+
+    /// 특정 문제를 풀이 완료로 표시
+    /// - Parameters:
+    ///   - problemNumber: 문제 번호
+    ///   - platform: 플랫폼
+    /// - Note: 해당 문제가 히스토리에 없으면 아무 동작도 하지 않음
+    mutating func markAsSolved(problemNumber: String, platform: Platform) {
+        if let index = entries.firstIndex(where: {
+            $0.problemNumber == problemNumber && $0.platform == platform
+        }) {
+            entries[index].solved = true
+        }
     }
 
     /// 히스토리를 JSON 파일로 저장
