@@ -1,0 +1,37 @@
+#!/bin/bash
+# pre-push hook: Verify version consistency when pushing tags
+
+# Read stdin for refs being pushed
+while read local_ref local_sha remote_ref remote_sha
+do
+  # Check if pushing a version tag (refs/tags/v*)
+  if [[ $remote_ref =~ ^refs/tags/v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+    TAG_VERSION="${BASH_REMATCH[1]}"
+
+    echo "🔍 Checking version consistency for tag v$TAG_VERSION..."
+
+    # Extract version from KPS.swift
+    CODE_VERSION=$(grep -E 'version: "[0-9]+\.[0-9]+\.[0-9]+"' Sources/kps/KPS.swift | sed -E 's/.*version: "([0-9]+\.[0-9]+\.[0-9]+)".*/\1/')
+
+    if [[ -z "$CODE_VERSION" ]]; then
+      echo "❌ Error: Could not extract version from Sources/kps/KPS.swift"
+      exit 1
+    fi
+
+    if [[ "$TAG_VERSION" != "$CODE_VERSION" ]]; then
+      echo ""
+      echo "❌ Error: Version mismatch detected!"
+      echo "   📌 Tag version:  v$TAG_VERSION"
+      echo "   📝 Code version: $CODE_VERSION (Sources/kps/KPS.swift)"
+      echo ""
+      echo "💡 Fix: Update version in Sources/kps/KPS.swift to \"$TAG_VERSION\""
+      echo ""
+      exit 1
+    fi
+
+    echo "✅ Version check passed: v$TAG_VERSION matches code version"
+    echo ""
+  fi
+done
+
+exit 0
