@@ -11,6 +11,44 @@
 
 ---
 
+## v0.2.0 (2026-01-28)
+
+### Universal Binary 전환
+
+**완료:**
+- 릴리즈 빌드 방식 변경
+  - 아키텍처별 분리 배포(arm64, x86_64) → Universal binary 단일 배포
+  - lipo를 사용한 Universal binary 생성
+  - 압축 파일 크기 변화 없음 (1022KB, 99.93%)
+- CI/CD 자동화 단순화
+  - awk 상태 머신 제거 (18줄 → 0줄)
+  - sed 기반 단순 치환으로 변경 (3줄)
+  - Formula 업데이트 복잡도 83% 감소
+  - release.yml: 39줄 → 26줄 (33% 감소)
+- Homebrew Formula 구조 개선
+  - on_macos 아키텍처 블록 제거
+  - 단일 URL/SHA256 구조로 단순화 (24줄 → 15줄, 38% 감소)
+  - install 메서드 단순화 (아키텍처 분기 제거)
+- 측정 데이터 기록
+  - ARM64 tar.gz: 506KB
+  - x86_64 tar.gz: 516KB
+  - Universal tar.gz: 1021KB
+  - 사용자 다운로드: 516KB → 1021KB (절대값 작아 체감 차이 무의미)
+
+**기술적 이점:**
+- macOS 표준 기술 사용 (Universal binary)
+- Formula 업데이트 안정성 향상 (포맷 독립적)
+- 장기 유지보수성 향상
+- 다음 릴리즈부터 완전 자동화
+
+**설치 방법:**
+```bash
+brew tap zaehorang/tap
+brew install kps
+```
+
+---
+
 ## v0.1.1 (2026-01-28)
 
 ### Homebrew 배포 지원
