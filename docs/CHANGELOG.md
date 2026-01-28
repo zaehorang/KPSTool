@@ -31,6 +31,14 @@
   - README.md Homebrew 섹션 활성화
   - Plan/2026-01-28_homebrew-deployment.md 작성 (배포 계획)
   - 버전 0.1.1로 업데이트
+- 릴리즈 프로세스 완료
+  - GitHub Actions 워크플로우 권한 수정 (contents: write, pull-requests: write)
+  - v0.1.1 태그 생성 및 푸시
+  - Intel + ARM 바이너리 자동 빌드 성공
+  - GitHub Release 생성 (kps-x86_64-v0.1.1.tar.gz, kps-arm64-v0.1.1.tar.gz)
+  - homebrew-tap에 Formula 업데이트 PR 자동 생성
+  - homebrew-tap PR 머지 완료
+  - Homebrew 설치 검증 완료 (`brew install kps`)
 
 **설치 방법:**
 ```bash

@@ -493,7 +493,7 @@ kps open  # 최근 파일 (9999.swift) 열기
 
 ## 5. 배포 계획
 
-### v0.1.0 (MVP)
+### v0.1.0 (MVP) ✅ 완료
 
 **배포 방식**: GitHub Release
 
@@ -512,19 +512,31 @@ git push origin v0.1.0
 
 ---
 
-### v0.2.0 (Post-MVP)
+### v0.1.1 (Homebrew 배포) ✅ 완료
 
-**배포 방식**: Homebrew tap
+**배포 방식**: Homebrew tap + GitHub Release
 
 ```bash
 brew tap zaehorang/tap
 brew install kps
 ```
 
-**준비사항:**
-- Formula 작성
-- tap 저장소 생성
-- 바이너리 자동 빌드 (GitHub Actions)
+**완료 항목:**
+- ✅ Formula 작성 (Multi-arch 지원)
+- ✅ homebrew-tap 저장소 생성
+- ✅ 바이너리 자동 빌드 (GitHub Actions)
+- ✅ GitHub Release 자동화
+- ✅ Formula 자동 업데이트 (PR)
+
+**배포 결과:**
+- homebrew-tap: https://github.com/zaehorang/homebrew-tap
+- Release: https://github.com/zaehorang/KPSTool/releases/tag/v0.1.1
+
+---
+
+### v0.2.0 (향후 계획)
+
+**목표**: 사용자 경험 개선 및 기능 확장
 
 ---
 
